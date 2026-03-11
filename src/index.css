@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+/* Editable cell input */
+.editable-cell input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: right;
+  outline: none;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+}
+.editable-cell input:focus {
+  background: white;
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px #3b82f6;
+}

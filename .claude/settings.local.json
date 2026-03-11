@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(brew upgrade:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(python3:*)",
+      "Bash(open:*)",
+      "Bash(unzip -p src/tools/contract-generator/HopDong_NGUYỄN_VĂN_AN.docx word/document.xml 2>/dev/null | python3 -c \"import sys; from xml.dom.minidom import parseString; print\\(parseString\\(sys.stdin.read\\(\\)\\).toprettyxml\\(indent='  '\\)\\)\" 2>/dev/null | head -300)",
+      "Bash(unzip -p \"src/tools/contract-generator/BBNT_NGUYỄN_VĂN_AN.docx\" word/document.xml 2>/dev/null | python3 -c \"import sys; from xml.dom.minidom import parseString; print\\(parseString\\(sys.stdin.read\\(\\)\\).toprettyxml\\(indent='  '\\)\\)\" 2>/dev/null | head -300)",
+      "Bash(unzip -p \"src/tools/contract-generator/HopDong_NGUYỄN_VĂN_AN.docx\" word/document.xml 2>/dev/null | python3 -c \"\nimport sys\ncontent = sys.stdin.read\\(\\)\n# Extract just the text content\nimport re\n# Remove XML tags but keep text\ntext = re.sub\\(r'<w:br[^/]*/>', '\\\\n', content\\)\ntext = re.sub\\(r'<[^>]+>', '', text\\)\ntext = re.sub\\(r'\\\\n{3,}', '\\\\n\\\\n', text\\)\nprint\\(text[:8000]\\)\n\")",
+      "Bash(unzip -p \"src/tools/contract-generator/BBNT_NGUYỄN_VĂN_AN.docx\" word/document.xml 2>/dev/null | python3 -c \"\nimport sys\ncontent = sys.stdin.read\\(\\)\nimport re\ntext = re.sub\\(r'<w:br[^/]*/>', '\\\\n', content\\)\ntext = re.sub\\(r'<[^>]+>', '', text\\)\ntext = re.sub\\(r'\\\\n{3,}', '\\\\n\\\\n', text\\)\nprint\\(text[:6000]\\)\n\")",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const {Document} = require\\('docx'\\); console.log\\('docx ok'\\)\" 2>/dev/null || node --input-type=module -e \"import\\('docx'\\).then\\(m => console.log\\('docx ok', Object.keys\\(m\\).slice\\(0,5\\)\\)\\)\" 2>&1 | head -5)",
+      "Bash(node --input-type=module -e \"import {ITableBordersOptions} from 'docx'\" 2>&1 | head -3; node -e \"const d = require\\('docx'\\); const t = new d.Table\\({width:{size:100,type:d.WidthType.PERCENTAGE}, rows:[]}\\); console.log\\(Object.keys\\(t\\)\\)\" 2>&1 | head -5)",
+      "Bash(node -e \"const d = require\\('docx'\\); console.log\\(d.AlignmentType\\)\" 2>&1 | head -5)",
+      "WebFetch(domain:skillsmp.com)",
+      "Bash(unzip -p \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Ecom Contract/BBNT Ecom.docx\" word/document.xml | python3 -c \"import sys,re; t=sys.stdin.read\\(\\); t=re.sub\\(r'<w:br[^/]*/>', '\\\\n', t\\); t=re.sub\\(r'<[^>]+>','',t\\); t=re.sub\\(r'\\\\n{3,}','\\\\n\\\\n',t\\); print\\(t\\)\")",
+      "Bash(unzip -p \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Ecom Contract/HD Ecom.doc\" word/document.xml 2>/dev/null | python3 -c \"import sys,re; t=sys.stdin.read\\(\\); t=re.sub\\(r'<w:br[^/]*/>', '\\\\n', t\\); t=re.sub\\(r'<[^>]+>','',t\\); t=re.sub\\(r'\\\\n{3,}','\\\\n\\\\n',t\\); print\\(t\\)\" || strings \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Ecom Contract/HD Ecom.doc\" | grep -v \"^.\\\\{1\\\\}$\" | head -300)",
+      "Bash(unzip -p \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Photographer Contract/BBNT Photo.docx\" word/document.xml | python3 -c \"import sys,re; t=sys.stdin.read\\(\\); t=re.sub\\(r'<w:br[^/]*/>', '\\\\n', t\\); t=re.sub\\(r'<[^>]+>','',t\\); t=re.sub\\(r'\\\\n{3,}','\\\\n\\\\n',t\\); print\\(t\\)\")",
+      "Bash(unzip -p \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Photographer Contract/HD Photo.doc\" word/document.xml 2>/dev/null | python3 -c \"import sys,re; t=sys.stdin.read\\(\\); t=re.sub\\(r'<w:br[^/]*/>', '\\\\n', t\\); t=re.sub\\(r'<[^>]+>','',t\\); t=re.sub\\(r'\\\\n{3,}','\\\\n\\\\n',t\\); print\\(t\\)\" || strings \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Photographer Contract/HD Photo.doc\" | grep -v \"^.\\\\{1\\\\}$\" | head -300)",
+      "Bash(unzip -p \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Stylist Contract/BBNT Stylist.docx\" word/document.xml | python3 -c \"import sys,re; t=sys.stdin.read\\(\\); t=re.sub\\(r'<w:br[^/]*/>', '\\\\n', t\\); t=re.sub\\(r'<[^>]+>','',t\\); t=re.sub\\(r'\\\\n{3,}','\\\\n\\\\n',t\\); print\\(t\\)\")",
+      "Bash(unzip -p \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Stylist Contract/HD- Stylist.doc\" word/document.xml 2>/dev/null | python3 -c \"import sys,re; t=sys.stdin.read\\(\\); t=re.sub\\(r'<w:br[^/]*/>', '\\\\n', t\\); t=re.sub\\(r'<[^>]+>','',t\\); t=re.sub\\(r'\\\\n{3,}','\\\\n\\\\n',t\\); print\\(t\\)\" || strings \"/Users/Davido/Documents/davido-toolkit/src/tools/contract-generator/3 types/Stylist Contract/HD- Stylist.doc\" | grep -v \"^.\\\\{1\\\\}$\" | head -300)",
+      "Bash(rm -rf /Users/Davido/Documents/davido-toolkit/src/tools/contract-generator && mkdir /Users/Davido/Documents/davido-toolkit/src/tools/contract-generator)",
+      "Bash(textutil -convert txt \"Template Photographer Contract/HD Photo.doc\" -output /tmp/hd_photo.txt)",
+      "Read(//tmp/**)",
+      "Bash(vercel --version 2>&1)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel --prod 2>&1)",
+      "Bash(vercel --prod --yes 2>&1)",
+      "Bash(vercel ls:*)",
+      "Bash(gh auth:*)",
+      "Bash(git init:*)"
+    ]
+  }
+}
