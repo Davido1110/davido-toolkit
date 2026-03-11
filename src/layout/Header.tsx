@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useState, useRef } from 'react';
+import { useLocation, Link } from 'react-router-dom';
 import { TOOLS } from '@/config/tools';
+import { useAuth } from '@/context/AuthContext';
 
 interface Props {
   onMenuClick: () => void;
@@ -19,8 +20,21 @@ function useDark() {
 
 export function Header({ onMenuClick }: Props) {
   const { dark, toggle } = useDark();
+  const { profile, logout } = useAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const el = document.querySelector('main');
@@ -71,7 +85,7 @@ export function Header({ onMenuClick }: Props) {
         )}
       </div>
 
-      {/* Right: dark mode toggle */}
+      {/* Right: dark mode toggle + user menu */}
       <div className="flex items-center gap-2">
         <button
           onClick={toggle}
@@ -90,6 +104,45 @@ export function Header({ onMenuClick }: Props) {
             </svg>
           )}
         </button>
+
+        {/* User avatar + dropdown */}
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <div className="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center text-white text-xs font-semibold">
+              {profile?.name?.charAt(0).toUpperCase() ?? '?'}
+            </div>
+            <span className="hidden sm:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
+              {profile?.name}
+            </span>
+          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg py-1 z-50">
+              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
+                <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{profile?.name}</p>
+                <p className="text-xs text-gray-400 truncate">{profile?.email}</p>
+              </div>
+              {profile?.role === 'admin' && (
+                <Link
+                  to="/admin"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <span>🛡️</span> Admin panel
+                </Link>
+              )}
+              <button
+                onClick={() => { setMenuOpen(false); logout(); }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <span>→</span> Sign out
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
