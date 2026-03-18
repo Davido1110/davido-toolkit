@@ -46,5 +46,15 @@ export const TOOLS: ToolMeta[] = [
     tags: ['contract', 'docx', 'leonardo', 'bbnt'],
     component: lazy(() => import('../tools/contract-generator')),
   },
+  {
+    id: 'pay-slip',
+    name: 'Bảng Lương (Pay-slip)',
+    description: 'Tính toán bảng lương thuế cho Cty & HKD — OT, hoa hồng, phụ cấp. Export Excel.',
+    path: '/tools/pay-slip',
+    category: 'finance',
+    icon: '💸',
+    tags: ['lương', 'payroll', 'excel', 'OT', 'hoa hồng', 'finance'],
+    component: lazy(() => import('../tools/Pay-slip')),
+  },
   // Add more tools here — each with its own lazy import
 ];
