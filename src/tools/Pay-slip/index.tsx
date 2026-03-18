@@ -1,10 +1,9 @@
 import { useState, useReducer, useCallback } from 'react';
 import type { Employee, MonthlyInput, InputAction, PayrollRow, ReconciliationSummary, ActiveTab } from './types';
-import { DEFAULT_CONSTANTS, STORAGE_KEY } from './constants';
+import { DEFAULT_CONSTANTS } from './constants';
 import { runPayroll, buildReconciliation, countWorkingDays } from './logic/payroll';
 import { MonthlyInputTab } from './components/MonthlyInputTab';
 import { PayrollResultTab } from './components/PayrollResultTab';
-import { GuideTab } from './components/GuideTab';
 import { SuggestionTab } from './Suggestion/components/SuggestionTab';
 
 function currentMonthDefault(): string {
@@ -56,17 +55,8 @@ function inputReducer(state: MonthlyInput, action: InputAction): MonthlyInput {
   }
 }
 
-function loadEmployees(): Employee[] {
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? (JSON.parse(stored) as Employee[]) : [];
-  } catch {
-    return [];
-  }
-}
-
 export default function PaySlipTool() {
-  const [employees, setEmployeesRaw] = useState<Employee[]>(loadEmployees);
+  const [employees, setEmployeesRaw] = useState<Employee[]>([]);
   const [consts] = useState(DEFAULT_CONSTANTS);
   const [input, dispatch] = useReducer(inputReducer, INITIAL_INPUT);
   const [payrollRows, setPayrollRows] = useState<PayrollRow[] | null>(null);
@@ -75,11 +65,6 @@ export default function PaySlipTool() {
 
   const updateEmployees = useCallback((updated: Employee[]) => {
     setEmployeesRaw(updated);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-    } catch {
-      // quota exceeded — ignore
-    }
   }, []);
 
   function handleCalculate() {
@@ -123,9 +108,6 @@ export default function PaySlipTool() {
             <span className="ml-1 w-2 h-2 rounded-full bg-red-500 inline-block" />
           )}
         </button>
-        <button className={tabCls('guide')} onClick={() => setActiveTab('guide')}>
-          <span>📖</span> Hướng Dẫn
-        </button>
 
         {/* Employee count badge */}
         <div className="ml-auto flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
@@ -147,7 +129,6 @@ export default function PaySlipTool() {
         {activeTab === 'result' && hasResult && (
           <PayrollResultTab rows={payrollRows} summary={summary} month={input.month} />
         )}
-        {activeTab === 'guide' && <GuideTab />}
         <div className={activeTab === 'suggestion' ? '' : 'hidden'}>
           <SuggestionTab employees={employees} />
         </div>
