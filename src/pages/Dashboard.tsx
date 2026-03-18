@@ -1,20 +1,28 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { TOOLS, CATEGORIES } from '@/config/tools';
+import { useAuth } from '@/context/AuthContext';
 
 export function Dashboard() {
   const [search, setSearch] = useState('');
+  const { profile } = useAuth();
+
+  const accessibleTools = useMemo(() => {
+    if (!profile || profile.role === 'admin') return TOOLS;
+    if (!profile.allowedTools) return TOOLS;
+    return TOOLS.filter((t) => profile.allowedTools!.includes(t.id));
+  }, [profile]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    if (!q) return TOOLS;
-    return TOOLS.filter(
+    if (!q) return accessibleTools;
+    return accessibleTools.filter(
       (t) =>
         t.name.toLowerCase().includes(q) ||
         t.description.toLowerCase().includes(q) ||
         t.tags?.some((tag) => tag.includes(q)),
     );
-  }, [search]);
+  }, [search, accessibleTools]);
 
   const grouped = useMemo(() => {
     const map: Record<string, typeof TOOLS> = {};

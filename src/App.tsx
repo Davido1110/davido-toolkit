@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppLayout } from './layout/AppLayout';
 import { Dashboard } from './pages/Dashboard';
@@ -9,6 +9,22 @@ import { RegisterPage } from './pages/RegisterPage';
 import { PendingPage } from './pages/PendingPage';
 import { AdminPage } from './pages/AdminPage';
 import { TOOLS } from './config/tools';
+import type { ToolMeta } from './config/tools';
+
+function ToolRoute({ tool }: { tool: ToolMeta }) {
+  const { profile } = useAuth();
+  const allowed =
+    !profile ||
+    profile.role === 'admin' ||
+    !profile.allowedTools ||
+    profile.allowedTools.includes(tool.id);
+  if (!allowed) return <Navigate to="/" replace />;
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <tool.component />
+    </Suspense>
+  );
+}
 
 function LoadingFallback() {
   return (
@@ -45,11 +61,7 @@ export default function App() {
               <Route
                 key={tool.id}
                 path={tool.path}
-                element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <tool.component />
-                  </Suspense>
-                }
+                element={<ToolRoute tool={tool} />}
               />
             ))}
             <Route path="*" element={<Navigate to="/" replace />} />

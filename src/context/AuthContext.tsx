@@ -18,6 +18,7 @@ export interface UserProfile {
   status: UserStatus;
   role: 'user' | 'admin';
   createdAt: unknown;
+  allowedTools?: string[]; // tool IDs the user can access; undefined = all tools (admin)
 }
 
 interface AuthContextValue {
