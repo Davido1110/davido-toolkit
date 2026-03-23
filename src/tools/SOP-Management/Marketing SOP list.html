@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quy trình vận hành Marketing — Retail Fashion Nam v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --border-hover: #3a3a50;
+    --text: #e8e8ef;
+    --text-dim: #8888a0;
+    --text-muted: #5a5a72;
+    --accent-media: #ff6b35;
+    --accent-d2c: #00d4aa;
+    --accent-ecom: #7c5cfc;
+    --accent-cmo: #ffd700;
+    --accent-cross: #ff4081;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; overflow-x: hidden;
+  }
+  .grain {
+    position: fixed; inset: 0; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 999;
+  }
+  header { padding: 40px 40px 20px; border-bottom: 1px solid var(--border); }
+  header h1 {
+    font-size: 26px; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  header p { color: var(--text-dim); font-size: 13px; margin-top: 6px; font-weight: 300; }
+  .legend { display: flex; gap: 20px; padding: 16px 40px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-dim); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .container { padding: 30px 40px 60px; max-width: 1400px; margin: 0 auto; }
+
+  .section-card { border-radius: 16px; margin-bottom: 24px; overflow: hidden; border: 1px solid var(--border); transition: border-color 0.3s ease; }
+  .section-card:hover { border-color: var(--border-hover); }
+  .section-header { padding: 24px 28px; cursor: pointer; display: flex; justify-content: space-between; align-items: flex-start; transition: background 0.2s ease; }
+  .section-header:hover { background: rgba(255,255,255,0.015); }
+  .section-header h2 { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .section-header .sub { font-size: 12px; color: var(--text-dim); font-weight: 400; margin-top: 3px; }
+  .section-header .members { font-size: 11px; color: var(--text-muted); font-weight: 400; margin-top: 2px; }
+  .chevron { font-size: 20px; color: var(--text-dim); transition: transform 0.3s ease; font-family: 'Space Mono', monospace; flex-shrink: 0; margin-top: 4px; }
+  .chevron.open { transform: rotate(90deg); }
+  .section-body { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+  .section-body.open { max-height: 12000px; }
+  .accent-bar { width: 3px; height: 16px; border-radius: 2px; display: inline-block; flex-shrink: 0; }
+
+  .role-group { padding: 0 28px 20px; }
+  .role-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .role-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  .proc { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; margin-bottom: 10px; transition: all 0.2s ease; }
+  .proc:hover { border-color: var(--border-hover); transform: translateX(3px); }
+  .proc h4 { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.4; }
+  .proc .desc { font-size: 11.5px; color: var(--text-dim); line-height: 1.6; font-weight: 300; margin-bottom: 10px; }
+
+  .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 16px; margin-bottom: 10px; }
+  .meta-item { display: flex; align-items: flex-start; gap: 6px; font-size: 10.5px; line-height: 1.5; }
+  .meta-label { color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; flex-shrink: 0; font-family: 'Space Mono', monospace; font-size: 9px; margin-top: 1px; }
+  .meta-value { color: var(--text-dim); font-weight: 400; }
+  .collab { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tag { font-size: 9px; padding: 2px 8px; border-radius: 20px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
+
+  .multi-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 0 24px; padding: 0 28px; }
+
+  @media (max-width: 900px) {
+    .container { padding: 20px; }
+    header { padding: 24px 20px 16px; }
+    .legend { padding: 12px 20px; gap: 12px; }
+    .meta-grid { grid-template-columns: 1fr; }
+    .multi-col { grid-template-columns: 1fr; padding: 0 20px; }
+    .section-header { padding: 20px; }
+    .role-group { padding: 0 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<header>
+  <h1>Quy trình Vận hành Bán lẻ — Phòng Marketing</h1>
+  <p>Brand thời trang nam · v2: Trigger / Chu kỳ → Output → Người nhận · Click để mở rộng</p>
+</header>
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent-cmo)"></div>CMO</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent-media)"></div>Team Media</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent-d2c)"></div>Team D2C</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent-ecom)"></div>Team Ecommerce</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent-cross)"></div>Liên phòng ban</div>
+</div>
+<div class="container">
+
+<!-- ===== CMO ===== -->
+<div class="section-card" style="background:linear-gradient(135deg,rgba(255,215,0,0.06),rgba(255,215,0,0.01))">
+  <div class="section-header" onclick="tog(this)">
+    <div>
+      <h2><span class="accent-bar" style="background:var(--accent-cmo)"></span> CMO — Chief Marketing Officer</h2>
+      <div class="sub">Quản lý chiến lược toàn phòng, phân bổ ngân sách, KPI & báo cáo lãnh đạo</div>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="section-body">
+    <div class="role-group">
+
+      <div class="proc"><h4>Lập kế hoạch Marketing tổng thể</h4>
+        <div class="desc">Xây dựng marketing plan: mục tiêu revenue, brand awareness, customer acquisition. Phân bổ ngân sách theo kênh D2C / Ecom / Offline.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Đầu quý / đầu năm, hoặc CEO yêu cầu điều chỉnh</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Quý / Năm</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Marketing Plan deck + bảng budget allocation</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CEO (duyệt), Kế toán (budget), Team Leads (thực thi)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CEO</span><span class="tag">Kế toán</span><span class="tag">Leader D2C</span><span class="tag">Leader Ecom</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý P&L Marketing</h4>
+        <div class="desc">Theo dõi chi phí MKT vs. doanh thu theo kênh, tính ROAS/CAC/LTV. Đối soát hoa hồng affiliate/KOL. Đề xuất điều chỉnh ngân sách.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Cuối tháng chốt số + bất thường khi chi phí vượt ngưỡng</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng (báo cáo chính thức), Tuần (monitoring)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo P&L MKT, bảng đối soát hoa hồng, đề xuất điều chỉnh budget</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CEO (báo cáo), Kế toán + HR (data hoa hồng để làm lương)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Kế toán</span><span class="tag">HR</span><span class="tag">CEO</span></div>
+      </div>
+
+      <div class="proc"><h4>Duyệt Campaign & Creative</h4>
+        <div class="desc">Review concept campaign, key visual, nội dung lớn trước go-live. Đảm bảo đúng brand guideline & thông điệp chiến lược.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Team submit brief / creative lên duyệt</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Approved brief hoặc feedback chỉnh sửa cụ thể</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Art Director (thực thi visual), Leader D2C & Ecom (triển khai)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Art Director</span><span class="tag">Leader D2C</span><span class="tag">Leader Ecom</span></div>
+      </div>
+
+      <div class="proc"><h4>Báo cáo hiệu quả Marketing cho lãnh đạo</h4>
+        <div class="desc">Tổng hợp performance toàn kênh: revenue, traffic, conversion, chi phí. Phân tích channel mix & đề xuất chiến lược.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Cuối tuần / cuối tháng / CEO yêu cầu đột xuất</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần / Tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo tổng hợp MKT performance (deck / dashboard)</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CEO</span></div>
+        </div>
+        <div class="collab"><span class="tag">CEO</span><span class="tag">Kế toán</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý đối tác bên ngoài</h4>
+        <div class="desc">Đàm phán & quản lý agency, KOL lớn, MCN, photographer. Duyệt hợp đồng, SOW, nghiệm thu & thanh toán.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Nhu cầu hợp tác mới / gia hạn / cuối tháng nghiệm thu</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo hợp đồng + nghiệm thu tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Hợp đồng ký, biên bản nghiệm thu, đề nghị thanh toán</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Kế toán (thanh toán), HR (hồ sơ CTV), Đối tác (ký kết)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Kế toán</span><span class="tag">HR</span></div>
+      </div>
+
+      <div class="proc"><h4>Định hướng Brand & Positioning</h4>
+        <div class="desc">Xây dựng & cập nhật brand identity, tone of voice, positioning. Đồng bộ brand guideline mọi kênh & touchpoint.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Collection mới / rebrand / phát hiện brand inconsistency</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo mùa / năm + ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Brand guideline doc, tone of voice guide, visual identity kit</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Art Director (thực thi), toàn team MKT (tuân thủ), R&D (align SP)</span></div>
+        </div>
+        <div class="collab"><span class="tag">R&D</span><span class="tag">CEO</span><span class="tag">Art Director</span></div>
+      </div>
+
+      <div class="proc"><h4>Phối hợp Go-to-Market sản phẩm mới</h4>
+        <div class="desc">Lên GTM plan: timeline truyền thông, kênh, thông điệp. Đồng bộ R&D (mẫu), Purchasing (nhập hàng), Storage (nhập kho).</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">R&D confirm SP sẵn sàng / Purchasing confirm ngày hàng về</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo lịch ra SP (hàng tháng hoặc theo mùa)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">GTM timeline, brief chụp hình, brief content, listing plan</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Media (chụp/quay), D2C (web+social), Ecom (listing), Storage (ready ship)</span></div>
+        </div>
+        <div class="collab"><span class="tag">R&D</span><span class="tag">Purchasing</span><span class="tag">Storage</span><span class="tag">Toàn team MKT</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý nhân sự phòng MKT</h4>
+        <div class="desc">Tuyển dụng, đánh giá KPI, phát triển năng lực. Xử lý thử việc, chính thức, kỷ luật, thưởng.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Vị trí trống / cuối tháng chốt KPI / cuối probation</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng (KPI), Quý (review), Ad-hoc (tuyển dụng)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bảng KPI, đề xuất tuyển/thưởng/kỷ luật, kết quả phỏng vấn</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">HR (hồ sơ, hợp đồng), CEO (duyệt đề xuất)</span></div>
+        </div>
+        <div class="collab"><span class="tag">HR</span><span class="tag">CEO</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEAM MEDIA ===== -->
+<div class="section-card" style="background:linear-gradient(135deg,rgba(255,107,53,0.05),rgba(255,107,53,0.01))">
+  <div class="section-header" onclick="tog(this)">
+    <div>
+      <h2><span class="accent-bar" style="background:var(--accent-media)"></span> Team Media</h2>
+      <div class="sub">Sản xuất toàn bộ creative assets cho thương hiệu</div>
+      <div class="members">Art Director · Designer · Video Editor</div>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="section-body">
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-media)"></div> Art Director</div>
+
+      <div class="proc"><h4>Xây dựng Creative Direction theo mùa/campaign</h4>
+        <div class="desc">Định hướng mood, concept visual. Tạo moodboard, style guide cho team thực thi.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">CMO duyệt campaign brief / collection mới từ R&D</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo mùa / campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Moodboard, style guide, color palette, reference visual</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Designer + Video Editor (thực thi), CMO (duyệt)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">R&D</span></div>
+      </div>
+
+      <div class="proc"><h4>Review & QC chất lượng visual output</h4>
+        <div class="desc">Duyệt toàn bộ design, video, ảnh SP trước xuất bản. Đảm bảo brand consistency.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Designer / Video Editor submit output</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Liên tục (mỗi khi có output)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Approved visual hoặc feedback chỉnh sửa</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Designer / Video Editor (chỉnh), D2C & Ecom (sử dụng asset)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Designer</span><span class="tag">Video Editor</span></div>
+      </div>
+
+      <div class="proc"><h4>Chỉ đạo buổi chụp hình / quay video SP</h4>
+        <div class="desc">Lên brief, set up styling, chỉ đạo photographer/videographer. Đảm bảo output đủ cho tất cả kênh.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">SP mới cần visual / campaign cần ảnh mới</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo lịch ra SP + campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bộ ảnh/video gốc (raw), shot list hoàn thành</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Designer (hậu kỳ), Video Editor (dựng), D2C + Ecom (sử dụng)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Photographer (ngoài)</span><span class="tag">R&D</span><span class="tag">Purchasing</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-media)"></div> Designer</div>
+
+      <div class="proc"><h4>Thiết kế ấn phẩm Marketing đa kênh</h4>
+        <div class="desc">Banner web, social post, email template, POP, packaging insert. Theo brief từ D2C & Ecom.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Brief thiết kế từ Team D2C / Ecom / CMO</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Liên tục theo calendar content & campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">File thiết kế final (nhiều size/format)</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Content Social (đăng bài), NV Ads (chạy ads), NV Sàn (listing)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Team D2C</span><span class="tag">Team Ecom</span><span class="tag">Art Director (duyệt)</span></div>
+      </div>
+
+      <div class="proc"><h4>Thiết kế Landing Page & Web Assets</h4>
+        <div class="desc">Giao diện LP campaign, banner homepage, A+ content Amazon.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Campaign mới / SP mới cần LP</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">File design LP + web banner đúng spec</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader D2C (upload/deploy), Art Director (duyệt)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader D2C</span><span class="tag">Art Director</span></div>
+      </div>
+
+      <div class="proc"><h4>Xử lý hậu kỳ ảnh sản phẩm</h4>
+        <div class="desc">Retouch, cắt nền, color grading. Xuất nhiều format. Quản lý thư viện ảnh SP.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Sau buổi chụp — nhận raw từ Art Director</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo lịch chụp</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bộ ảnh SP final (nhiều format), thư viện ảnh cập nhật</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">NV Sàn (listing), Leader D2C (web), Content Social (social)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Art Director (duyệt)</span><span class="tag">Team D2C</span><span class="tag">Team Ecom</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-media)"></div> Video Editor</div>
+
+      <div class="proc"><h4>Sản xuất Video quảng cáo</h4>
+        <div class="desc">Dựng video ads Facebook, TikTok, YouTube. Nhiều format 15s/30s/60s. A/B test creative.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">NV Ads / NV Booking TikTok yêu cầu creative mới / ads fatigue</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần (batch) + ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Video ads final (nhiều ratio/duration), thumbnail</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">NV Ads Facebook, NV Booking TikTok</span></div>
+        </div>
+        <div class="collab"><span class="tag">NV Ads</span><span class="tag">NV Booking TikTok</span><span class="tag">Art Director (duyệt)</span></div>
+      </div>
+
+      <div class="proc"><h4>Sản xuất Video content organic</h4>
+        <div class="desc">Video BTS, review SP, storytelling brand, lookbook. Phối hợp Content Social kịch bản.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Content calendar từ Content Social</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần (theo lịch đăng)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Video final cho Reels / TikTok / YouTube</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Content Social (đăng bài), Art Director (duyệt)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Content Social</span><span class="tag">Art Director</span></div>
+      </div>
+
+      <div class="proc"><h4>Video cho Livestream & sàn TMĐT</h4>
+        <div class="desc">Video giới thiệu SP cho listing, recap livestream, teaser flash sale.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">SP mới lên sàn / trước mega sale / sau livestream</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo lịch Ecom + mega sale</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Video listing, teaser sale, recap live</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">NV Sàn (upload listing), NV Booking TikTok</span></div>
+        </div>
+        <div class="collab"><span class="tag">Team Ecom</span><span class="tag">Art Director</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEAM D2C ===== -->
+<div class="section-card" style="background:linear-gradient(135deg,rgba(0,212,170,0.05),rgba(0,212,170,0.01))">
+  <div class="section-header" onclick="tog(this)">
+    <div>
+      <h2><span class="accent-bar" style="background:var(--accent-d2c)"></span> Team Marketing D2C</h2>
+      <div class="sub">Kênh bán trực tiếp: Website, Facebook, Instagram</div>
+      <div class="members">Leader MKT D2C · Content Social · NV Ads Facebook</div>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="section-body">
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-d2c)"></div> Leader Marketing D2C</div>
+
+      <div class="proc"><h4>Lên kế hoạch & triển khai Campaign D2C</h4>
+        <div class="desc">Lập campaign brief: mục tiêu, ngân sách, timeline, phân công. Điều phối team thực thi.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Marketing plan từ CMO / sự kiện đặc biệt / SP mới</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo campaign (2-4/tháng)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Campaign brief, timeline, phân công cụ thể</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (duyệt), Media (creative), NV Ads (chạy), Content Social (đăng)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">Team Media</span></div>
+      </div>
+
+      <div class="proc"><h4>CRO — Tối ưu chuyển đổi Website</h4>
+        <div class="desc">Phân tích funnel, A/B test LP, tối ưu UX trang SP & checkout. Heatmap & session recording.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">CVR giảm / bounce rate tăng / sau campaign lớn</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng (review) + ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo phân tích + đề xuất thay đổi UX/UI</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Designer (thực hiện), CMO (duyệt thay đổi lớn)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Designer</span><span class="tag">CMO</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý CRM & Email/SMS Marketing</h4>
+        <div class="desc">Phân segment, thiết lập automation (welcome, cart abandon, win-back, post-purchase). Báo cáo retention.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Hành vi khách (mua, bỏ giỏ, inactive) / campaign mới</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Automation (tự động), Campaign (theo lịch), Review tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Email/SMS campaigns, báo cáo retention (open rate, revenue from email)</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (báo cáo), Sale & CS (data khách cần chăm sóc)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Sale & CS</span><span class="tag">Designer</span></div>
+      </div>
+
+      <div class="proc"><h4>Báo cáo hiệu quả kênh D2C</h4>
+        <div class="desc">Dashboard: sessions, CVR, AOV, revenue, ROAS, cost per channel. So sánh vs target.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Cuối ngày / cuối tuần / cuối tháng chốt số</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày / Tuần / Tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Dashboard + báo cáo D2C performance</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (tổng hợp báo cáo CEO), Kế toán (đối soát doanh thu)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">Kế toán</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-d2c)"></div> Content Social</div>
+
+      <div class="proc"><h4>Lên Content Calendar & sản xuất nội dung</h4>
+        <div class="desc">Lịch đăng Facebook, Instagram, TikTok organic. Viết caption, storytelling, review SP theo tone brand.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Đầu tuần (lên lịch) / campaign brief từ Leader D2C</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần (calendar), Ngày (đăng bài)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Content calendar, caption + visual brief, bài đăng</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader D2C (duyệt), Designer (thiết kế), Video Editor (video)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader D2C</span><span class="tag">Team Media</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý cộng đồng & tương tác</h4>
+        <div class="desc">Trả lời comment, inbox. Xử lý khủng hoảng nhỏ. Report sentiment & engagement.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Khách comment/inbox (real-time) / negative buzz</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Real-time + báo cáo tuần</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Phản hồi khách, báo cáo engagement & sentiment</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Sale & CS (case phức tạp), Leader D2C, CMO (nếu khủng hoảng)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Sale & CS</span><span class="tag">Leader D2C</span></div>
+      </div>
+
+      <div class="proc"><h4>Phối hợp KOL/KOC Seeding</h4>
+        <div class="desc">Brief SP cho micro-influencer, theo dõi timeline, thu thập UGC repurpose.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Campaign seeding / SP mới cần social proof</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Danh sách KOL, brief, tracking sheet, UGC, báo cáo hiệu quả</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (duyệt list + budget), Storage (gửi sample)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">Storage</span></div>
+      </div>
+
+      <div class="proc"><h4>Viết content Website & SEO</h4>
+        <div class="desc">Blog, mô tả SP, LP copy. Tối ưu SEO: title, meta, heading, internal link.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">SP mới / keyword opportunity / Leader D2C brief</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần (blog) + theo SP mới</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bài blog, mô tả SP, copy LP — đã tối ưu SEO</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader D2C (duyệt & upload web)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader D2C</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-d2c)"></div> Nhân viên Ads Facebook</div>
+
+      <div class="proc"><h4>Setup & vận hành chiến dịch Ads Facebook/Meta</h4>
+        <div class="desc">Tạo campaign Ads Manager: targeting, budget, placement. Setup pixel, CAPI, custom audience.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Campaign brief từ Leader D2C / creative mới từ Media</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo campaign + daily optimization</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Ads campaign live, daily performance log</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader D2C (review)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader D2C</span><span class="tag">Video Editor</span><span class="tag">Designer</span></div>
+      </div>
+
+      <div class="proc"><h4>Tối ưu Ads & A/B Test</h4>
+        <div class="desc">Monitor CPC, CPM, CTR, ROAS daily. Scale winning, kill losers. Test creative, copy, audience.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Daily check + ROAS giảm dưới ngưỡng</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Quyết định scale/kill, yêu cầu creative mới</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Video Editor + Designer (creative mới), Leader D2C</span></div>
+        </div>
+        <div class="collab"><span class="tag">Team Media</span><span class="tag">Leader D2C</span></div>
+      </div>
+
+      <div class="proc"><h4>Remarketing & Lookalike Audience</h4>
+        <div class="desc">Xây remarketing funnel theo hành vi web. Tạo LAL từ purchaser list, high-value segment.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Đủ data pixel / customer list mới từ Leader D2C</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng (update audience) + theo campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Custom audience & LAL sẵn sàng</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader D2C (duyệt chiến lược audience)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader D2C</span><span class="tag">Sale & CS</span></div>
+      </div>
+
+      <div class="proc"><h4>Báo cáo Ads Performance</h4>
+        <div class="desc">Tổng hợp spend vs revenue, ROAS, CPA theo campaign. Đề xuất điều chỉnh budget & creative.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Cuối ngày / cuối tuần / cuối tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày (brief), Tuần (chi tiết), Tháng (tổng hợp)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo ads (spend, revenue, ROAS, đề xuất)</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader D2C, Kế toán (đối soát chi phí ads)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader D2C</span><span class="tag">Kế toán</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEAM ECOM ===== -->
+<div class="section-card" style="background:linear-gradient(135deg,rgba(124,92,252,0.05),rgba(124,92,252,0.01))">
+  <div class="section-header" onclick="tog(this)">
+    <div>
+      <h2><span class="accent-bar" style="background:var(--accent-ecom)"></span> Team Ecommerce</h2>
+      <div class="sub">Vận hành kênh sàn TMĐT: Shopee, TikTok Shop, Lazada</div>
+      <div class="members">Leader Ecom · NV Booking TikTok · NV Phụ trách sàn · Thực tập sinh</div>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="section-body">
+    <div class="multi-col">
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-ecom)"></div> Leader Ecommerce</div>
+
+      <div class="proc"><h4>Lập kế hoạch kinh doanh sàn TMĐT</h4>
+        <div class="desc">Target revenue, promotion calendar, budget theo từng sàn.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Đầu tháng / đầu quý / mega sale lớn</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng / Quý</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Plan kinh doanh sàn, deal calendar</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (duyệt), Kế toán (budget), NV Sàn + NV Booking (thực thi)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">Kế toán</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý Campaign sàn (Mega Sale, Flash Sale)</h4>
+        <div class="desc">Đăng ký deal, set voucher, phối hợp AM sàn. Chuẩn bị stock & giá cho sale lớn.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Lịch mega sale sàn (9.9, 11.11, 12.12...) / deal từ AM</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo lịch sàn (hàng tháng)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Deal registered, voucher setup, stock request</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Storage (chuẩn bị hàng), Purchasing (bổ sung), NV Sàn (thực thi)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Storage</span><span class="tag">Purchasing</span><span class="tag">NV Sàn</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý Pricing & Margin sàn</h4>
+        <div class="desc">Tính giá tối ưu theo phí sàn, shipping, voucher, commission. Đảm bảo margin tối thiểu.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">SP mới / thay đổi phí sàn / review margin tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo SP mới + review tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bảng giá sàn, phân tích margin theo SKU</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (duyệt), Kế toán (đối soát), NV Sàn (cập nhật giá)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Kế toán</span><span class="tag">CMO</span></div>
+      </div>
+
+      <div class="proc"><h4>Quản lý Affiliate & MCN Network</h4>
+        <div class="desc">Setup affiliate, quản lý MCN, duyệt creator, set commission, theo dõi hiệu quả.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Onboard MCN mới / review tháng / campaign push affiliate</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng (review & đối soát) + ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo affiliate, đối soát hoa hồng, creator approved list</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (báo cáo + budget), Kế toán (thanh toán), Storage (gửi hàng mượn)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">Kế toán</span><span class="tag">Storage</span></div>
+      </div>
+
+      <div class="proc"><h4>Báo cáo & phân tích dữ liệu Ecom</h4>
+        <div class="desc">GMV, đơn hàng, hoàn/hủy, traffic, conversion. Competitor & trend analysis.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Cuối ngày / tuần / tháng / sau mega sale</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày / Tuần / Tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo Ecom performance, competitor analysis</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CMO (tổng hợp), Kế toán (đối soát doanh thu sàn)</span></div>
+        </div>
+        <div class="collab"><span class="tag">CMO</span><span class="tag">Kế toán</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-ecom)"></div> NV Booking TikTok</div>
+
+      <div class="proc"><h4>Booking & quản lý KOL/KOC TikTok</h4>
+        <div class="desc">Tìm kiếm, đàm phán creator. Gửi sample, brief, tracking đơn affiliate.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Campaign mới / SP mới / creator hết hạn</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần (outreach) + theo campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Creator booked, brief gửi, tracking sheet</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom (duyệt + báo cáo), Storage (gửi sample)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader Ecom</span><span class="tag">Storage</span></div>
+      </div>
+
+      <div class="proc"><h4>Vận hành TikTok Shop Ads</h4>
+        <div class="desc">Setup & tối ưu Product Shopping, Live Shopping, Video Shopping Ads.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Brief từ Leader Ecom / creative mới từ Video Editor</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày (optimize) + theo campaign</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">TikTok Ads live, daily performance log</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom (review), Kế toán (đối soát spend)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader Ecom</span><span class="tag">Video Editor</span></div>
+      </div>
+
+      <div class="proc"><h4>Lên plan & hỗ trợ Livestream TikTok</h4>
+        <div class="desc">Lịch live, kịch bản, phối hợp host. SP pin, voucher live. Báo cáo sau phiên.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Lịch live cố định + mega sale + SP mới</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần (lịch cố định) + event đặc biệt</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Kịch bản, SP pin list, báo cáo live (GMV, viewer, CVR)</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom, Sale & CS (hỗ trợ chat live)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader Ecom</span><span class="tag">Sale & CS</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-ecom)"></div> Nhân viên Phụ trách sàn</div>
+
+      <div class="proc"><h4>Quản lý Listing SP trên sàn</h4>
+        <div class="desc">Upload & cập nhật SP: ảnh, mô tả, giá, biến thể, tồn kho. SEO title & keyword.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">SP mới từ R&D / ảnh mới từ Designer / giá mới từ Leader</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo SP mới + cập nhật liên tục</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Listing SP hoàn chỉnh & tối ưu</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom (review), Designer (nếu cần chỉnh ảnh)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Designer</span><span class="tag">Leader Ecom</span></div>
+      </div>
+
+      <div class="proc"><h4>Vận hành đơn hàng sàn</h4>
+        <div class="desc">Xác nhận đơn, phối hợp kho đóng gói & giao vận. Xử lý hoàn/hủy, khiếu nại.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Đơn mới (real-time) / khách yêu cầu hoàn/hủy</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Real-time + báo cáo ngày</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Đơn confirmed → kho, đơn hoàn → log lý do</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Storage (đóng gói & ship), Sale & CS (case khó), Kế toán (đối soát)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Storage</span><span class="tag">Sale & CS</span><span class="tag">Kế toán</span></div>
+      </div>
+
+      <div class="proc"><h4>Setup khuyến mãi sàn</h4>
+        <div class="desc">Tạo voucher, combo deal, flash sale. Kiểm soát tồn kho khuyến mãi.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Plan KM từ Leader Ecom / lịch mega sale</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo campaign + mega sale hàng tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Voucher & deal live, stock reserved</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom (review), Storage (kiểm tồn kho)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader Ecom</span><span class="tag">Storage</span></div>
+      </div>
+
+      <div class="proc"><h4>Chăm sóc Shop Rating & đánh giá</h4>
+        <div class="desc">Phản hồi review, xử lý đánh giá xấu, duy trì chat response & ship đúng hạn.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Review mới / shop score giảm / vi phạm chỉ số</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày (review) + real-time (chat)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Review phản hồi, shop score report, escalation</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Sale & CS (case khó), Storage (nếu liên quan ship), Leader Ecom</span></div>
+        </div>
+        <div class="collab"><span class="tag">Sale & CS</span><span class="tag">Storage</span></div>
+      </div>
+    </div>
+
+    <div class="role-group">
+      <div class="role-label"><div class="role-dot" style="background:var(--accent-ecom)"></div> Thực tập sinh Ecom</div>
+
+      <div class="proc"><h4>Hỗ trợ upload & cập nhật Listing</h4>
+        <div class="desc">Nhập liệu SP, cập nhật giá/tồn kho, chuẩn hóa ảnh theo template sàn.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">NV Sàn phân công task hàng ngày</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ngày</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Listing đã nhập / cập nhật</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">NV Sàn (review & approve)</span></div>
+        </div>
+        <div class="collab"><span class="tag">NV Sàn</span></div>
+      </div>
+
+      <div class="proc"><h4>Hỗ trợ chat sàn & xử lý đơn</h4>
+        <div class="desc">Trả lời chat theo script. Xử lý đơn pending, in phiếu giao.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Chat khách (real-time) / đơn pending</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Real-time trong giờ làm việc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Khách phản hồi, đơn xử lý, phiếu in</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">NV Sàn (escalate), Storage (phiếu giao)</span></div>
+        </div>
+        <div class="collab"><span class="tag">NV Sàn</span><span class="tag">Storage</span></div>
+      </div>
+
+      <div class="proc"><h4>Thu thập dữ liệu đối thủ & thị trường</h4>
+        <div class="desc">Research giá, SP top bán, trend keyword. Tổng hợp báo cáo.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Leader Ecom giao task / trước mega sale</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tuần / trước mega sale</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo competitor (giá, SP, keyword, promo)</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom (quyết định pricing & strategy)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Leader Ecom</span></div>
+      </div>
+    </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===== LIÊN PHÒNG BAN ===== -->
+<div class="section-card" style="background:linear-gradient(135deg,rgba(255,64,129,0.05),rgba(255,64,129,0.01))">
+  <div class="section-header" onclick="tog(this)">
+    <div>
+      <h2><span class="accent-bar" style="background:var(--accent-cross)"></span> Quy trình Liên phòng ban</h2>
+      <div class="sub">MKT phối hợp với Kế toán, R&D, Purchasing, Sale & CS, Storage, HR, CEO</div>
+    </div>
+    <span class="chevron">›</span>
+  </div>
+  <div class="section-body">
+    <div class="role-group">
+
+      <div class="proc"><h4>Thanh toán & đối soát chi phí MKT</h4>
+        <div class="desc">MKT đề xuất chi → Kế toán kiểm → CEO duyệt. Đối soát ads spend, phí sàn, phí KOL, phí sản xuất.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Phát sinh chi phí / cuối tháng chốt sổ</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ad-hoc (thanh toán) + Tháng (đối soát tổng)</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Đề nghị thanh toán, bảng đối soát chi phí MKT</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Kế toán (xử lý), CEO (duyệt khoản lớn)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Kế toán</span><span class="tag">CEO</span><span class="tag">CMO</span></div>
+      </div>
+
+      <div class="proc"><h4>Demand Forecast & Stock Planning</h4>
+        <div class="desc">MKT dự báo nhu cầu theo campaign → Purchasing đặt hàng → Storage chuẩn bị → Ecom phân bổ stock.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Trước mega sale / SP mới / stock sắp hết</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng (forecast) + ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bảng dự báo bán theo SKU, PO request</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Purchasing (đặt hàng), Storage (nhập kho), Leader Ecom (phân bổ)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Purchasing</span><span class="tag">Storage</span><span class="tag">Leader Ecom</span><span class="tag">CMO</span></div>
+      </div>
+
+      <div class="proc"><h4>Xử lý khiếu nại & hoàn hàng</h4>
+        <div class="desc">Sale & CS nhận → Ecom xử lý trên sàn → Storage nhận hoàn → Kế toán ghi nhận chi phí.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Khách khiếu nại / yêu cầu hoàn</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Real-time + tổng hợp tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Case resolved, hàng hoàn nhập kho, chi phí ghi nhận</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Sale & CS (thông báo khách), Storage (nhận hoàn), Kế toán (ghi sổ)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Sale & CS</span><span class="tag">Storage</span><span class="tag">Kế toán</span><span class="tag">NV Sàn</span></div>
+      </div>
+
+      <div class="proc"><h4>Phối hợp chụp/quay sản phẩm</h4>
+        <div class="desc">R&D/Purchasing cung cấp mẫu → Media chụp/quay → Output phân phối D2C, Ecom, Sale.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Sample về kho / collection mới sẵn sàng</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Theo lịch ra SP</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bộ ảnh/video SP cho tất cả kênh</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">D2C (web+social), Ecom (listing), Sale (catalog)</span></div>
+        </div>
+        <div class="collab"><span class="tag">R&D</span><span class="tag">Purchasing</span><span class="tag">Art Director</span><span class="tag">Designer</span></div>
+      </div>
+
+      <div class="proc"><h4>Chính sách giá & khuyến mãi thống nhất</h4>
+        <div class="desc">CMO đề xuất → Kế toán tính margin → CEO duyệt → Ecom & D2C triển khai đồng bộ.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">SP mới / chi phí đầu vào thay đổi / chiến lược mới từ CEO</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Quý (review) + ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Bảng giá chính thức theo kênh, policy giảm giá tối đa</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">Leader Ecom (sàn), Leader D2C (web), Sale & CS (tư vấn)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Kế toán</span><span class="tag">CEO</span><span class="tag">CMO</span></div>
+      </div>
+
+      <div class="proc"><h4>Onboarding nhân viên MKT mới</h4>
+        <div class="desc">HR tuyển → CMO phỏng vấn → HR onboard → Team Lead training nghiệp vụ & tool.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Ứng viên được chọn / NV mới nhận việc</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Ad-hoc</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">NV hoàn thành onboard, có access tool, hiểu quy trình</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">HR (hồ sơ + HĐ), CMO (confirm probation), Team Lead (training)</span></div>
+        </div>
+        <div class="collab"><span class="tag">HR</span><span class="tag">CMO</span></div>
+      </div>
+
+      <div class="proc"><h4>Báo cáo doanh thu đa kênh tổng hợp</h4>
+        <div class="desc">Ecom + D2C + Sale tổng hợp revenue → Kế toán đối soát → CMO phân tích → Báo cáo CEO.</div>
+        <div class="meta-grid">
+          <div class="meta-item"><span class="meta-label">Trigger</span><span class="meta-value">Cuối tháng chốt sổ / CEO yêu cầu</span></div>
+          <div class="meta-item"><span class="meta-label">Chu kỳ</span><span class="meta-value">Tháng</span></div>
+          <div class="meta-item"><span class="meta-label">Output</span><span class="meta-value">Báo cáo doanh thu đa kênh, channel mix analysis</span></div>
+          <div class="meta-item"><span class="meta-label">Nhận</span><span class="meta-value">CEO (chiến lược), Kế toán (đối chiếu sổ sách)</span></div>
+        </div>
+        <div class="collab"><span class="tag">Kế toán</span><span class="tag">Sale & CS</span><span class="tag">CEO</span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function tog(header) {
+  const body = header.nextElementSibling;
+  const chev = header.querySelector('.chevron');
+  body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open');
+}
+</script>
+</body>
+</html>

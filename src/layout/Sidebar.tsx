@@ -6,11 +6,13 @@ import { useAuth } from '@/context/AuthContext';
 interface Props {
   open: boolean;
   onClose: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
-export function Sidebar({ open, onClose }: Props) {
+export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
   const [search, setSearch] = useState('');
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const [collapsedCats, setCollapsedCats] = useState<Record<string, boolean>>({});
   const location = useLocation();
   const { profile } = useAuth();
 
@@ -41,7 +43,7 @@ export function Sidebar({ open, onClose }: Props) {
   }, [filtered]);
 
   const toggleCategory = (id: string) =>
-    setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
+    setCollapsedCats((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <>
@@ -56,10 +58,11 @@ export function Sidebar({ open, onClose }: Props) {
       <aside
         className={`
           fixed top-0 left-0 h-full z-30 flex flex-col
-          w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
-          transition-transform duration-200
-          ${open ? 'translate-x-0' : '-translate-x-full'}
-          lg:relative lg:translate-x-0 lg:z-auto
+          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+          transition-all duration-200
+          ${open ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
+          lg:relative lg:z-auto lg:translate-x-0
+          ${collapsed ? 'lg:w-0 lg:overflow-hidden' : 'lg:w-64'}
         `}
       >
         {/* Logo */}
@@ -117,7 +120,7 @@ export function Sidebar({ open, onClose }: Props) {
           {CATEGORIES.map((cat) => {
             const catTools = grouped[cat.id];
             if (!catTools?.length) return null;
-            const isOpen = !collapsed[cat.id];
+            const isOpen = !collapsedCats[cat.id];
             const hasActive = catTools.some((t) => location.pathname === t.path);
 
             return (
@@ -178,8 +181,17 @@ export function Sidebar({ open, onClose }: Props) {
         </nav>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400">
-          {accessibleTools.length} tool{accessibleTools.length !== 1 ? 's' : ''} available
+        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 flex items-center justify-between">
+          <span>{accessibleTools.length} tool{accessibleTools.length !== 1 ? 's' : ''} available</span>
+          <button
+            onClick={onToggleCollapse}
+            className="hidden lg:flex items-center justify-center w-6 h-6 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            title="Ẩn thanh bên"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+            </svg>
+          </button>
         </div>
       </aside>
     </>

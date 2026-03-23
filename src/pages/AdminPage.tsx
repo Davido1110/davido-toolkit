@@ -28,6 +28,14 @@ export function AdminPage() {
     fetchUsers();
   }, []);
 
+  const toggleManager = async (uid: string, currentRole: string) => {
+    const newRole = currentRole === 'manager' ? 'user' : 'manager';
+    setUpdating(uid + 'role');
+    await updateDoc(doc(db, 'users', uid), { role: newRole });
+    setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, role: newRole as UserProfile['role'] } : u)));
+    setUpdating(null);
+  };
+
   const updateStatus = async (uid: string, status: UserStatus) => {
     setUpdating(uid);
     await updateDoc(doc(db, 'users', uid), { status });
@@ -95,6 +103,9 @@ export function AdminPage() {
                         {u.role === 'admin' && (
                           <span className="ml-2 text-xs text-brand-600">(admin)</span>
                         )}
+                        {u.role === 'manager' && (
+                          <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">(manager)</span>
+                        )}
                       </td>
                       <td className="px-5 py-4 text-gray-500 dark:text-gray-400">{u.email}</td>
                       <td className="px-5 py-4">{statusBadge(u.status)}</td>
@@ -122,6 +133,19 @@ export function AdminPage() {
                               className="px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white rounded-lg transition-colors"
                             >
                               Approve
+                            </button>
+                          )}
+                          {u.role !== 'admin' && (
+                            <button
+                              onClick={() => toggleManager(u.uid, u.role)}
+                              disabled={updating === u.uid + 'role'}
+                              className={`px-3 py-1.5 text-xs font-medium disabled:opacity-50 text-white rounded-lg transition-colors ${
+                                u.role === 'manager'
+                                  ? 'bg-purple-600 hover:bg-purple-700'
+                                  : 'bg-gray-400 hover:bg-purple-500'
+                              }`}
+                            >
+                              {u.role === 'manager' ? 'Unset Manager' : 'Set Manager'}
                             </button>
                           )}
                           {u.status !== 'rejected' && u.role !== 'admin' && (

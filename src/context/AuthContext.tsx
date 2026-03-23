@@ -16,7 +16,7 @@ export interface UserProfile {
   email: string;
   name: string;
   status: UserStatus;
-  role: 'user' | 'admin';
+  role: 'user' | 'manager' | 'admin';
   createdAt: unknown;
   allowedTools?: string[]; // tool IDs the user can access; undefined = all tools (admin)
 }

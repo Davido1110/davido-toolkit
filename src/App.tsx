@@ -16,6 +16,7 @@ function ToolRoute({ tool }: { tool: ToolMeta }) {
   const allowed =
     !profile ||
     profile.role === 'admin' ||
+    profile.role === 'manager' ||
     !profile.allowedTools ||
     profile.allowedTools.includes(tool.id);
   if (!allowed) return <Navigate to="/" replace />;

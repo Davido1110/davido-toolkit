@@ -56,5 +56,16 @@ export const TOOLS: ToolMeta[] = [
     tags: ['lương', 'payroll', 'excel', 'OT', 'hoa hồng', 'finance'],
     component: lazy(() => import('../tools/Pay-slip')),
   },
-  // Add more tools here — each with its own lazy import
+  {
+    id: 'sop-management',
+    name: 'SOP Management',
+    description: 'Tạo & quản lý quy trình nội bộ (SOP), onboarding nhân viên, AI hỏi đáp, báo cáo tự động.',
+    path: '/tools/sop-management',
+    category: 'productivity',
+    icon: '📋',
+    tags: ['SOP', 'quy trình', 'onboarding', 'AI', 'báo cáo'],
+    badge: 'New',
+    component: lazy(() => import('../tools/SOP-Management')),
+  },
+// Add more tools here — each with its own lazy import
 ];

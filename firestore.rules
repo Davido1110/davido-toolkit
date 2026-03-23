@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the user is approved
+    function isApproved() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    // Helper: get user role
+    function userRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() { return isApproved() && userRole() == 'admin'; }
+    function isManager() { return isApproved() && userRole() in ['admin', 'manager']; }
+    function isUser() { return isApproved() && userRole() in ['admin', 'manager', 'user']; }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if isAdmin() || request.auth.uid == userId;
+    }
+
+    // SOPs collection — admins full CRUD, others read published only
+    match /sops/{sopId} {
+      allow read: if isUser();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Learning progress
+    match /learning/{progressId} {
+      allow read: if isManager();
+      allow create: if isUser();
+      allow update: if isUser();
+    }
+  }
+}
