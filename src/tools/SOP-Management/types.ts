@@ -27,6 +27,7 @@ export interface SOP {
   title: string;
   description: string;
   category: string;
+  team: string;
   status: SOPStatus;
   roles: AssigneeRole[];
   steps: SOPStep[];
@@ -82,6 +83,13 @@ export const STEP_TYPE_LABELS: Record<StepType, string> = {
   parallel: 'Song song',
   decision: 'Quyết định',
 };
+
+export const SOP_TEAMS = [
+  'D2C team',
+  'Media team',
+  'Ecom team',
+  'Livestream',
+];
 
 export const SOP_CATEGORIES = [
   'Marketing',

@@ -3,7 +3,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { createSOP, updateSOP, getSOPById } from '../lib/firestore';
 import { generateSOPFromDescription } from '../lib/qwen';
 import type { SOPStep, AssigneeRole, StepType } from '../types';
-import { ASSIGNEE_ROLE_LABELS, STEP_TYPE_LABELS, SOP_CATEGORIES } from '../types';
+import { ASSIGNEE_ROLE_LABELS, STEP_TYPE_LABELS, SOP_CATEGORIES, SOP_TEAMS } from '../types';
 
 interface Props {
   editingSopId?: string;
@@ -28,6 +28,7 @@ export default function SOPBuilder({ editingSopId, onDone }: Props) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState(SOP_CATEGORIES[0]);
+  const [team, setTeam] = useState('');
   const [tags, setTags] = useState('');
   const [roles, setRoles] = useState<AssigneeRole[]>(['staff']);
   const [steps, setSteps] = useState<SOPStep[]>([newStep(1)]);
@@ -47,6 +48,7 @@ export default function SOPBuilder({ editingSopId, onDone }: Props) {
       setTitle(sop.title);
       setDescription(sop.description);
       setCategory(sop.category);
+      setTeam(sop.team ?? '');
       setTags(sop.tags.join(', '));
       setRoles(sop.roles);
       setSteps(sop.steps);
@@ -114,6 +116,7 @@ export default function SOPBuilder({ editingSopId, onDone }: Props) {
         title: title.trim(),
         description: description.trim(),
         category,
+        team,
         tags: tags.split(',').map(t => t.trim()).filter(Boolean),
         roles,
         steps,
@@ -225,16 +228,29 @@ export default function SOPBuilder({ editingSopId, onDone }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tags (phân cách bằng dấu phẩy)
+              Team
             </label>
-            <input
-              type="text"
-              value={tags}
-              onChange={e => setTags(e.target.value)}
-              placeholder="shopee, khiếu nại, CS"
-              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <select
+              value={team}
+              onChange={e => setTeam(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">— Chọn team —</option>
+              {SOP_TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
           </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Tags (phân cách bằng dấu phẩy)
+          </label>
+          <input
+            type="text"
+            value={tags}
+            onChange={e => setTags(e.target.value)}
+            placeholder="shopee, khiếu nại, CS"
+            className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
