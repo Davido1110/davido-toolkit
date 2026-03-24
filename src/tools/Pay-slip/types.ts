@@ -77,4 +77,4 @@ export interface PayrollConstants {
   bhxhRate: number;            // 0.105 = 10.5% employee contribution
 }
 
-export type ActiveTab = 'input' | 'result' | 'suggestion';
+export type ActiveTab = 'input' | 'result' | 'suggestion' | 'gross-to-net';
