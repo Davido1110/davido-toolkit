@@ -6,7 +6,6 @@ import { AppLayout } from './layout/AppLayout';
 import { Dashboard } from './pages/Dashboard';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { PendingPage } from './pages/PendingPage';
 import { AdminPage } from './pages/AdminPage';
 import { TOOLS } from './config/tools';
 import type { ToolMeta } from './config/tools';
@@ -46,7 +45,7 @@ export default function App() {
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/pending" element={<PendingPage />} />
+          <Route path="/pending" element={<Navigate to="/" replace />} />
 
           {/* Protected routes */}
           <Route

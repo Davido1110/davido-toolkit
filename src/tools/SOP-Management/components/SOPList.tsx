@@ -31,20 +31,18 @@ function ActionButtons({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
         className="px-2.5 py-1 text-xs text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
         Xem
       </button>
-      {isCMO && <>
-        <button onClick={onEdit}
-          className="px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          Sửa
-        </button>
-        <button onClick={onToggle}
-          className="px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          {sop.status === 'published' ? 'Unpublish' : 'Publish'}
-        </button>
-        <button onClick={onDelete}
-          className="px-2.5 py-1 text-xs text-red-500 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
-          Xóa
-        </button>
-      </>}
+      <button onClick={onEdit}
+        className="px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        Sửa
+      </button>
+      <button onClick={onToggle}
+        className="px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+        {sop.status === 'published' ? 'Unpublish' : 'Publish'}
+      </button>
+      <button onClick={onDelete}
+        className="px-2.5 py-1 text-xs text-red-500 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+        Xóa
+      </button>
     </div>
   );
 }
@@ -180,7 +178,7 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
   async function load() {
     setLoading(true);
     try {
-      const data = isCMO || isLead ? await getSOPs() : await getPublishedSOPs();
+      const data = await getSOPs();
       setSops(data);
     } finally {
       setLoading(false);
@@ -261,12 +259,10 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
           Danh sách SOP
           <span className="ml-2 text-sm font-normal text-gray-400">({filtered.length})</span>
         </h2>
-        {isCMO && (
-          <button onClick={onNew}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-            + Tạo SOP mới
-          </button>
-        )}
+        <button onClick={onNew}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+          + Tạo SOP mới
+        </button>
       </div>
 
       {/* Toolbar */}
@@ -283,15 +279,13 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
           {categories.map(c => <option key={c} value={c}>{c === 'all' ? 'Tất cả danh mục' : c}</option>)}
         </select>
 
-        {/* Status filter — CMO/Lead only */}
-        {(isCMO || isLead) && (
-          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
-            className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="all">Tất cả</option>
-            <option value="published">Published</option>
-            <option value="draft">Nháp</option>
-          </select>
-        )}
+        {/* Status filter */}
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value as typeof filterStatus)}
+          className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="all">Tất cả</option>
+          <option value="published">Published</option>
+          <option value="draft">Nháp</option>
+        </select>
 
         {/* Divider */}
         <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
