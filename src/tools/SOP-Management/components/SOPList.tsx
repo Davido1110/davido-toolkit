@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../../context/AuthContext';
-import { getSOPs, getPublishedSOPs, deleteSOP, updateSOP } from '../lib/firestore';
+import { getSOPs, deleteSOP, updateSOP } from '../lib/firestore';
 import type { SOP } from '../types';
 
 interface Props {
@@ -20,8 +19,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 const catColor = (c: string) => CATEGORY_COLORS[c] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
 
-function ActionButtons({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
-  sop: SOP; isCMO: boolean;
+function ActionButtons({ sop, onView, onEdit, onToggle, onDelete }: {
+  sop: SOP;
   onView: () => void; onEdit: () => void;
   onToggle: () => void; onDelete: () => void;
 }) {
@@ -48,8 +47,8 @@ function ActionButtons({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
 }
 
 // ── Row (list) ─────────────────────────────────────────────────────────────────
-function RowItem({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
-  sop: SOP; isCMO: boolean;
+function RowItem({ sop, onView, onEdit, onToggle, onDelete }: {
+  sop: SOP;
   onView: () => void; onEdit: () => void; onToggle: () => void; onDelete: () => void;
 }) {
   return (
@@ -70,15 +69,15 @@ function RowItem({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
       </div>
       <div className="text-xs text-gray-400 shrink-0 hidden sm:block">{sop.steps.length} bước</div>
       <div onClick={e => e.stopPropagation()}>
-        <ActionButtons sop={sop} isCMO={isCMO} onView={onView} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
+        <ActionButtons sop={sop} onView={onView} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
       </div>
     </div>
   );
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────────
-function CardItem({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
-  sop: SOP; isCMO: boolean;
+function CardItem({ sop, onView, onEdit, onToggle, onDelete }: {
+  sop: SOP;
   onView: () => void; onEdit: () => void; onToggle: () => void; onDelete: () => void;
 }) {
   return (
@@ -102,15 +101,15 @@ function CardItem({ sop, isCMO, onView, onEdit, onToggle, onDelete }: {
       </div>
       <div onClick={e => e.stopPropagation()} className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
         <span className="text-xs text-gray-400">{sop.steps.length} bước</span>
-        <ActionButtons sop={sop} isCMO={isCMO} onView={onView} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
+        <ActionButtons sop={sop} onView={onView} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
       </div>
     </div>
   );
 }
 
 // ── Table ─────────────────────────────────────────────────────────────────────
-function TableView({ sops, isCMO, onView, onEdit, onToggle, onDelete }: {
-  sops: SOP[]; isCMO: boolean;
+function TableView({ sops, onView, onEdit, onToggle, onDelete }: {
+  sops: SOP[];
   onView: (s: SOP) => void; onEdit: (s: SOP) => void;
   onToggle: (s: SOP) => void; onDelete: (s: SOP) => void;
 }) {
@@ -149,7 +148,7 @@ function TableView({ sops, isCMO, onView, onEdit, onToggle, onDelete }: {
               </td>
               <td className="px-3 py-2.5 text-xs text-gray-400 hidden lg:table-cell">{sop.steps.length}</td>
               <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
-                <ActionButtons sop={sop} isCMO={isCMO}
+                <ActionButtons sop={sop}
                   onView={() => onView(sop)} onEdit={() => onEdit(sop)}
                   onToggle={() => onToggle(sop)} onDelete={() => onDelete(sop)} />
               </td>
@@ -163,9 +162,6 @@ function TableView({ sops, isCMO, onView, onEdit, onToggle, onDelete }: {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function SOPList({ onView, onEdit, onNew }: Props) {
-  const { profile } = useAuth();
-  const isCMO = profile?.role === 'admin';
-  const isLead = profile?.role === 'manager';
 
   const [sops, setSops] = useState<SOP[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,20 +225,20 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
     });
 
     if (viewMode === 'table') {
-      return <TableView sops={list} isCMO={isCMO}
+      return <TableView sops={list}
         onView={onView} onEdit={onEdit}
         onToggle={handleToggleStatus} onDelete={handleDelete} />;
     }
     if (viewMode === 'card') {
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {list.map(sop => <CardItem key={sop.id} sop={sop} isCMO={isCMO} {...actions(sop)} />)}
+          {list.map(sop => <CardItem key={sop.id} sop={sop} {...actions(sop)} />)}
         </div>
       );
     }
     return (
       <div className="space-y-2">
-        {list.map(sop => <RowItem key={sop.id} sop={sop} isCMO={isCMO} {...actions(sop)} />)}
+        {list.map(sop => <RowItem key={sop.id} sop={sop} {...actions(sop)} />)}
       </div>
     );
   }
@@ -325,7 +321,7 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
         <div className="text-center py-16 text-gray-400">
           <div className="text-4xl mb-3">📋</div>
           <div className="text-sm">Chưa có SOP nào{search ? ' phù hợp' : ''}.</div>
-          {isCMO && !search && (
+          {!search && (
             <button onClick={onNew} className="mt-3 text-blue-500 text-sm hover:underline">Tạo SOP đầu tiên</button>
           )}
         </div>
