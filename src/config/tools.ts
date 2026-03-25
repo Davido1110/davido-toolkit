@@ -57,6 +57,16 @@ export const TOOLS: ToolMeta[] = [
     component: lazy(() => import('../tools/Pay-slip')),
   },
   {
+    id: 'net-to-gross',
+    name: 'Net → Gross',
+    description: 'Tính ngược Gross từ lương Net mục tiêu — BHXH, phụ cấp, KPI, quỹ lương DN.',
+    path: '/tools/net-to-gross',
+    category: 'finance',
+    icon: '💱',
+    tags: ['lương', 'gross', 'net', 'BHXH', 'phiếu lương', 'finance'],
+    component: lazy(() => import('../tools/net-to-gross')),
+  },
+  {
     id: 'sop-management',
     name: 'SOP Management',
     description: 'Tạo & quản lý quy trình nội bộ (SOP), onboarding nhân viên, AI hỏi đáp, báo cáo tự động.',

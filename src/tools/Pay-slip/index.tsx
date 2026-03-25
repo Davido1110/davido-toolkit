@@ -5,7 +5,6 @@ import { runPayroll, buildReconciliation, countWorkingDays } from './logic/payro
 import { MonthlyInputTab } from './components/MonthlyInputTab';
 import { PayrollResultTab } from './components/PayrollResultTab';
 import { SuggestionTab } from './Suggestion/components/SuggestionTab';
-import { GrossToNetTab } from './components/GrossToNetTab';
 
 function currentMonthDefault(): string {
   const now = new Date();
@@ -109,10 +108,6 @@ export default function PaySlipTool() {
             <span className="ml-1 w-2 h-2 rounded-full bg-red-500 inline-block" />
           )}
         </button>
-        <button className={tabCls('gross-to-net')} onClick={() => setActiveTab('gross-to-net')}>
-          <span>💱</span> Net → Gross
-        </button>
-
         {/* Employee count badge */}
         <div className="ml-auto flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
           <span>{employees.length} NV</span>
@@ -136,7 +131,6 @@ export default function PaySlipTool() {
         <div className={activeTab === 'suggestion' ? '' : 'hidden'}>
           <SuggestionTab employees={employees} />
         </div>
-        {activeTab === 'gross-to-net' && <GrossToNetTab />}
       </div>
     </div>
   );
