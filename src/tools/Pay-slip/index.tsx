@@ -110,7 +110,7 @@ export default function PaySlipTool() {
           )}
         </button>
         <button className={tabCls('gross-to-net')} onClick={() => setActiveTab('gross-to-net')}>
-          <span>💱</span> Gross → Net
+          <span>💱</span> Net → Gross
         </button>
 
         {/* Employee count badge */}
