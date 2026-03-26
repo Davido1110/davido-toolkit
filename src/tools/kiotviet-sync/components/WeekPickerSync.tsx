@@ -48,11 +48,13 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
   const [weeks, setWeeks] = useState<Week[]>(() =>
     buildWeeks().map(w => ({ ...w, orderCount: null, syncing: false, liveCount: 0, error: '' }))
   );
-  const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef         = useRef<ReturnType<typeof setInterval> | null>(null);
   // Prevents both fetch-completion and poll-completion from firing at the same time
-  const handledRef   = useRef(false);
+  const handledRef      = useRef(false);
+  // Timestamp when this sync was triggered — used to ignore OLD stuck sync_logs
+  const pollStartedAtRef = useRef<number>(0);
   // Staleness detection: if records_synced hasn't changed in 3 min, function was killed
-  const lastCountRef = useRef<{ value: number; at: number }>({ value: -1, at: 0 });
+  const lastCountRef    = useRef<{ value: number; at: number }>({ value: -1, at: 0 });
 
   useEffect(() => {
     if (!db) return;
@@ -93,30 +95,35 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
   }
 
   // Poll sync_logs for both live progress AND completion.
-  // Also detects if the Edge Function was killed (count frozen for 3+ minutes).
+  // Only tracks sync_logs that were created AFTER this sync was triggered,
+  // so old stuck syncs from previous sessions don't interfere.
   function startPolling(idx: number) {
-    handledRef.current = false;
+    handledRef.current   = false;
+    pollStartedAtRef.current = Date.now();
     lastCountRef.current = { value: -1, at: Date.now() };
     if (pollRef.current) clearInterval(pollRef.current);
 
     pollRef.current = setInterval(async () => {
       if (!db || handledRef.current) return;
 
+      // Allow 90s for the Edge Function to boot and create its sync_log
+      const cutoff = new Date(pollStartedAtRef.current - 90 * 1000).toISOString();
       const { data } = await db.from('sync_logs')
-        .select('records_synced, status')
+        .select('records_synced, status, started_at')
+        .gte('started_at', cutoff)
         .order('started_at', { ascending: false })
         .limit(1)
         .single();
 
+      // No new sync_log yet — still waiting for Edge Function to boot
       if (!data || handledRef.current) return;
 
       if (data.status === 'running') {
         const count = data.records_synced ?? 0;
-        // Track when count last changed to detect a killed/stuck function
         if (count !== lastCountRef.current.value) {
           lastCountRef.current = { value: count, at: Date.now() };
         } else if (Date.now() - lastCountRef.current.at > 3 * 60 * 1000) {
-          // Count frozen for 3 minutes → function was killed by Supabase
+          // Count frozen for 3 min → Edge Function was killed without finishing
           handledRef.current = true;
           stopPolling();
           finishError(idx, 'Sync bị gián đoạn (Edge Function timeout). Thử lại.');
@@ -128,7 +135,7 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
         return;
       }
 
-      // Sync finished — handle completion via polling
+      // Sync finished
       handledRef.current = true;
       stopPolling();
       if (data.status === 'success') {

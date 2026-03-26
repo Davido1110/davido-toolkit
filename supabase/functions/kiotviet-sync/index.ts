@@ -160,8 +160,12 @@ async function syncOrders(db: DB, fromDate: string, toDate?: string, logId?: num
     orderDetails: Array<{ productId: number; productCode: string; productName: string; quantity: number; price: number; discount: number }>;
   };
 
+  // lastModifiedTo bounds the server-side query to the target week.
+  // If KiotViet ignores it, early termination still prevents runaway pagination.
+  const extraParams = toDate ? { lastModifiedTo: toDate } : {};
+
   const fetchPage = (offset: number) =>
-    kvGet('/orders', { lastModifiedFrom: fromDate, pageSize: PAGE_SIZE, currentItem: offset }) as Promise<{ data: KVOrder[]; total: number }>;
+    kvGet('/orders', { lastModifiedFrom: fromDate, ...extraParams, pageSize: PAGE_SIZE, currentItem: offset }) as Promise<{ data: KVOrder[]; total: number }>;
 
   // Fetch page 0 first to learn total count
   const first = await fetchPage(0);
