@@ -77,5 +77,17 @@ export const TOOLS: ToolMeta[] = [
     badge: 'New',
     component: lazy(() => import('../tools/SOP-Management')),
   },
+  {
+    id: 'kiotviet-sync',
+    name: 'KiotViet Sync',
+    description: 'Kéo đơn hàng, tồn kho, đặt NCC từ KiotViet API — lưu Supabase, dashboard giám sát.',
+    path: '/tools/kiotviet-sync',
+    category: 'warehouse',
+    icon: '🔄',
+    tags: ['kiotviet', 'sync', 'inventory', 'orders', 'supabase'],
+    badge: 'New',
+    component: lazy(() => import('../tools/kiotviet-sync')),
+  },
+
 // Add more tools here — each with its own lazy import
 ];
