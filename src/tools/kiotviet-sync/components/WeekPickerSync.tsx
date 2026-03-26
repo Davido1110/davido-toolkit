@@ -51,6 +51,8 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
   const pollRef      = useRef<ReturnType<typeof setInterval> | null>(null);
   // Prevents both fetch-completion and poll-completion from firing at the same time
   const handledRef   = useRef(false);
+  // Staleness detection: if records_synced hasn't changed in 3 min, function was killed
+  const lastCountRef = useRef<{ value: number; at: number }>({ value: -1, at: 0 });
 
   useEffect(() => {
     if (!db) return;
@@ -91,10 +93,10 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
   }
 
   // Poll sync_logs for both live progress AND completion.
-  // This handles the case where the HTTP connection times out (HTTP 546) but
-  // the Edge Function keeps running in the background.
+  // Also detects if the Edge Function was killed (count frozen for 3+ minutes).
   function startPolling(idx: number) {
     handledRef.current = false;
+    lastCountRef.current = { value: -1, at: Date.now() };
     if (pollRef.current) clearInterval(pollRef.current);
 
     pollRef.current = setInterval(async () => {
@@ -109,8 +111,19 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
       if (!data || handledRef.current) return;
 
       if (data.status === 'running') {
+        const count = data.records_synced ?? 0;
+        // Track when count last changed to detect a killed/stuck function
+        if (count !== lastCountRef.current.value) {
+          lastCountRef.current = { value: count, at: Date.now() };
+        } else if (Date.now() - lastCountRef.current.at > 3 * 60 * 1000) {
+          // Count frozen for 3 minutes → function was killed by Supabase
+          handledRef.current = true;
+          stopPolling();
+          finishError(idx, 'Sync bị gián đoạn (Edge Function timeout). Thử lại.');
+          return;
+        }
         setWeeks(prev => prev.map((w, i) =>
-          i === idx ? { ...w, liveCount: data.records_synced ?? 0 } : w
+          i === idx ? { ...w, liveCount: count } : w
         ));
         return;
       }

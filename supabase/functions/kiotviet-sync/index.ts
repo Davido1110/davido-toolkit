@@ -146,59 +146,65 @@ async function syncBranches(db: DB): Promise<number> {
   return rows.length;
 }
 
-// ─── Sync orders — page by page ───────────────────────────────────────────────
+// ─── Sync orders — parallel page fetching ────────────────────────────────────
 async function syncOrders(db: DB, fromDate: string, toDate?: string, logId?: number): Promise<number> {
-  let currentItem = 0;
-  let totalSynced = 0;
-  let pagesSinceProgress = 0;
   const EXCLUDED_STATUSES = new Set([4, 5]);
-
   const fromDateMs = new Date(fromDate).getTime();
   const toDateMs   = toDate ? new Date(toDate).getTime() : null;
-  // Early termination: if 2 consecutive pages have ALL orders past toDate,
-  // KiotViet has no more in-range orders (results sorted by modifiedDate asc).
-  let consecutivePastPages = 0;
+  const BATCH      = 3; // pages fetched in parallel per round
 
-  while (true) {
-    const params: Record<string, string | number | boolean> = {
-      lastModifiedFrom: fromDate,
-      pageSize: PAGE_SIZE,
-      currentItem,
-    };
+  type KVOrder = {
+    id: number; code: string; branchId: number; customerId: number | null;
+    customerName: string | null; status: number | string;
+    total: number; discount: number; createdDate: string; modifiedDate: string;
+    orderDetails: Array<{ productId: number; productCode: string; productName: string; quantity: number; price: number; discount: number }>;
+  };
 
-    const page = await kvGet('/orders', params) as { data: Array<{
-      id: number; code: string; branchId: number; customerId: number | null;
-      customerName: string | null; status: number | string; statusValue?: string;
-      total: number; discount: number;
-      createdDate: string; modifiedDate: string;
-      orderDetails: Array<{ productId: number; productCode: string; productName: string; quantity: number; price: number; discount: number }>;
-    }>; total: number };
+  const fetchPage = (offset: number) =>
+    kvGet('/orders', { lastModifiedFrom: fromDate, pageSize: PAGE_SIZE, currentItem: offset }) as Promise<{ data: KVOrder[]; total: number }>;
 
-    const allOrders = page.data ?? [];
-    if (!allOrders.length) break;
+  // Fetch page 0 first to learn total count
+  const first = await fetchPage(0);
+  const total = first.total ?? 0;
+  if (!first.data?.length) return 0;
 
-    // Early termination for week-specific backfill
+  // Build all offsets upfront — we stop early via early-termination below
+  const offsets: number[] = [];
+  for (let off = 0; off < total; off += PAGE_SIZE) offsets.push(off);
+
+  let totalSynced = 0;
+  let allPastCount = 0; // consecutive batches where EVERY order is past toDate
+
+  for (let bi = 0; bi < offsets.length; bi += BATCH) {
+    const batchOffsets = offsets.slice(bi, bi + BATCH);
+
+    // Fetch BATCH pages in parallel (reuse already-fetched page 0)
+    const pages = await Promise.all(
+      batchOffsets.map(off => off === 0 ? Promise.resolve(first) : fetchPage(off))
+    );
+
+    const batchOrders = pages.flatMap(p => p.data ?? []);
+    if (!batchOrders.length) break;
+
+    // Early termination: all orders in this batch are past toDate → no more in-range pages
     if (toDateMs !== null) {
-      const allPastToDate = allOrders.every(o =>
+      const allPast = batchOrders.every(o =>
         new Date(o.modifiedDate ?? o.createdDate).getTime() > toDateMs
       );
-      if (allPastToDate) {
-        if (++consecutivePastPages >= 2) break;
-      } else {
-        consecutivePastPages = 0;
-      }
+      if (allPast) { if (++allPastCount >= 1) break; }
+      else allPastCount = 0;
     }
 
-    // Split into active vs cancelled
-    const activeOrders: typeof allOrders = [];
+    // Split active vs cancelled
+    const activeOrders: KVOrder[] = [];
     const cancelledIds: number[] = [];
-    for (const o of allOrders) {
+    for (const o of batchOrders) {
       const s = typeof o.status === 'number' ? o.status : parseInt(String(o.status), 10) || 0;
       if (EXCLUDED_STATUSES.has(s)) cancelledIds.push(o.id);
       else activeOrders.push(o);
     }
 
-    // For week-specific backfill: keep only orders created within [fromDate, toDate]
+    // Keep only orders created within [fromDate, toDate] for week backfill
     const filteredOrders = toDateMs !== null
       ? activeOrders.filter(o => {
           const ms = new Date(o.createdDate).getTime();
@@ -207,9 +213,9 @@ async function syncOrders(db: DB, fromDate: string, toDate?: string, logId?: num
       : activeOrders;
 
     if (filteredOrders.length || cancelledIds.length) {
-      const orderIds   = filteredOrders.map(o => o.id);
+      const orderIds    = filteredOrders.map(o => o.id);
       const allCleanIds = [...orderIds, ...cancelledIds];
-      const orderRows  = filteredOrders.map(o => ({
+      const orderRows   = filteredOrders.map(o => ({
         order_id: o.id, order_code: o.code, branch_id: o.branchId,
         customer_id: o.customerId, customer_name: o.customerName,
         status: typeof o.status === 'number' ? o.status : parseInt(String(o.status), 10) || 0,
@@ -217,17 +223,12 @@ async function syncOrders(db: DB, fromDate: string, toDate?: string, logId?: num
         order_date: o.createdDate, modified_date: o.modifiedDate ?? o.createdDate,
       }));
 
-      // Parallel: clean up all old details + upsert new order headers
+      // Parallel: delete stale details + upsert headers
       await Promise.all([
-        allCleanIds.length
-          ? db.from('order_details').delete().in('order_id', allCleanIds)
-          : Promise.resolve(),
-        orderRows.length
-          ? db.from('orders').upsert(orderRows, { onConflict: 'order_id' }).then(({ error }) => { if (error) throw dbErr(error); })
-          : Promise.resolve(),
+        allCleanIds.length ? db.from('order_details').delete().in('order_id', allCleanIds) : Promise.resolve(),
+        orderRows.length   ? db.from('orders').upsert(orderRows, { onConflict: 'order_id' }).then(({ error }) => { if (error) throw dbErr(error); }) : Promise.resolve(),
       ]);
 
-      // Insert new details (after headers are guaranteed upserted)
       const detailRows = filteredOrders.flatMap(o =>
         (o.orderDetails ?? []).map(d => ({
           order_id: o.id, product_id: d.productId, product_code: d.productCode ?? '',
@@ -239,22 +240,12 @@ async function syncOrders(db: DB, fromDate: string, toDate?: string, logId?: num
         const { error: dErr } = await db.from('order_details').insert(detailRows);
         if (dErr) throw dbErr(dErr);
       }
-
-      // Delete cancelled order headers (after their details are cleaned)
-      if (cancelledIds.length) {
-        await db.from('orders').delete().in('order_id', cancelledIds);
-      }
+      if (cancelledIds.length) await db.from('orders').delete().in('order_id', cancelledIds);
 
       totalSynced += filteredOrders.length;
     }
 
-    currentItem += allOrders.length;
-    // Update progress every 3 pages to reduce DB round-trips
-    if (logId && ++pagesSinceProgress >= 3) {
-      await updateSyncProgress(db, logId, totalSynced);
-      pagesSinceProgress = 0;
-    }
-    if (currentItem >= page.total) break;
+    if (logId) await updateSyncProgress(db, logId, totalSynced);
   }
 
   return totalSynced;
