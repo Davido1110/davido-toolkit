@@ -6,17 +6,32 @@ on:
   workflow_dispatch:        # allow manual trigger from GitHub Actions UI
 
 jobs:
-  sync:
+  sync_orders:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-
     steps:
-      - name: Trigger full sync (invoices + products)
+      - name: Sync orders (7-day incremental)
         run: |
           curl -sf -X POST "${{ secrets.SUPABASE_FUNCTION_URL }}" \
             -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"sync_type":"full"}' \
+            -d '{"sync_type":"orders"}' \
             --max-time 160
-        # sync_type "full" = branches + orders (from lastSync to now) + products + avg_weekly_sales
-        # lastSync is read from sync_logs — handles gaps of any length automatically
+        # Syncs the last 7 days of invoices into order_details
+        # avg_weekly_sales (used for weeks_left) is computed from order_details — run this first
+
+  sync_products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: sync_orders
+    if: always()   # run even if sync_orders fails — avg_weekly_sales uses DB data ≤1 week old
+    steps:
+      - name: Sync products + inventory + weeks_left
+        run: |
+          curl -sf -X POST "${{ secrets.SUPABASE_FUNCTION_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"sync_type":"products"}' \
+            --max-time 120
+        # Fetches live inventory from KiotViet, computes avg_weekly_sales from DB, writes weeks_left
+        # Guarantees Cảnh báo tab is always updated every Monday (max 1 week delay)

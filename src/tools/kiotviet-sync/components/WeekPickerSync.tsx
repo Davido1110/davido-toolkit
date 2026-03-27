@@ -213,7 +213,7 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
           Đồng bộ đơn hàng — tuần này + 12 tuần gần nhất
         </p>
         <p className="text-xs text-gray-400">
-          <strong>Tuần này</strong> (xanh) sync tự động mỗi thứ Hai qua GitHub Actions. Click thủ công để sync ngay. Sau khi sync xong, chạy <strong>Sản phẩm</strong> để cập nhật avg_weekly_sales.
+          Tuần này (xanh) tự động sync mỗi thứ Hai lúc 2:00 sáng. Nhấp vào tuần bất kỳ để sync thủ công.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {weeks.map((week, idx) => {

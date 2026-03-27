@@ -30,22 +30,22 @@ export interface Product {
 }
 
 
-export interface Order {
-  order_id: number;
-  order_code: string;
+export interface Invoice {
+  invoice_id: number;
+  invoice_code: string;
   branch_id: number;
   customer_id: number | null;
   customer_name: string | null;
   status: number;
   total: number;
   discount: number;
-  order_date: string;
+  invoice_date: string;
   modified_date: string;
 }
 
-export interface OrderDetail {
+export interface InvoiceDetail {
   id: number;
-  order_id: number;
+  invoice_id: number;
   product_id: number;
   product_code: string;
   product_name: string;

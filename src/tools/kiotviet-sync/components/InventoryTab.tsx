@@ -6,16 +6,16 @@ const PAGE = 100;
 
 interface InventoryRow {
   product_id: number;
+  branch_id: number;
   product_code: string;
   product_name: string;
   category_name: string | null;
-  branch_id: number;
   on_hand: number;
   on_order: number;
   reserved: number;
 }
 
-type SortField = 'on_hand' | 'on_order' | 'reserved' | 'product_code';
+type SortField = 'on_hand' | 'on_order' | 'reserved';
 type SortDir   = 'asc' | 'desc';
 type StockStatus = '' | 'in_stock' | 'out_of_stock' | 'negative';
 
@@ -53,28 +53,27 @@ export default function InventoryTab() {
       });
   }, []);
 
-  useEffect(() => { fetchInventory(); }, [page, branchId, sortField, sortDir]);
+  useEffect(() => { fetchInventory(); }, [page, sortField, sortDir]);
 
   async function fetchInventory() {
     setLoading(true);
     setError('');
 
-    const today = new Date().toISOString().split('T')[0];
-
+    // Read from product_inventory_by_branch joined to products for name/category
     let q = db
-      .from('inventory_snapshots')
-      .select(`product_id, branch_id, on_hand, on_order, reserved, products!inner(code, name, category_name)`, { count: 'exact' })
-      .eq('snapshot_date', today)
-      .order(sortField === 'product_code' ? 'product_id' : sortField, { ascending: sortDir === 'asc' })
+      .from('product_inventory_by_branch')
+      .select('product_id, branch_id, on_hand, on_order, reserved, products!inner(code, name, category_name)', { count: 'exact' })
+      .order(sortField, { ascending: sortDir === 'asc' })
       .range(page * PAGE, page * PAGE + PAGE - 1);
 
     if (branchId)          q = q.eq('branch_id', Number(branchId));
     if (lowOnly)           q = q.lte('on_hand', threshold);
     if (onHandMin !== '')  q = q.gte('on_hand', Number(onHandMin));
     if (onHandMax !== '')  q = q.lte('on_hand', Number(onHandMax));
-    if (stockStatus === 'in_stock')    q = q.gt('on_hand', 0);
+    if (stockStatus === 'in_stock')     q = q.gt('on_hand', 0);
     if (stockStatus === 'out_of_stock') q = q.eq('on_hand', 0);
-    if (stockStatus === 'negative')    q = q.lt('on_hand', 0);
+    if (stockStatus === 'negative')     q = q.lt('on_hand', 0);
+    if (category) q = q.filter('products.category_name', 'eq', category);
 
     const { data, count, error: qErr } = await q;
     if (qErr) { setError(qErr.message); setLoading(false); return; }
@@ -87,15 +86,20 @@ export default function InventoryTab() {
     let mapped: InventoryRow[] = (data ?? []).map((r: RawRow) => {
       const prod = Array.isArray(r.products) ? r.products[0] : r.products;
       return {
-        product_id: r.product_id, product_code: prod.code, product_name: prod.name,
-        category_name: prod.category_name, branch_id: r.branch_id,
+        product_id: r.product_id, branch_id: r.branch_id,
+        product_code: prod.code, product_name: prod.name,
+        category_name: prod.category_name,
         on_hand: r.on_hand, on_order: r.on_order, reserved: r.reserved,
       };
     });
 
-    // Client-side filters for joined fields (search + category)
-    if (search)   mapped = mapped.filter(r => r.product_code.toLowerCase().includes(search.toLowerCase()) || r.product_name.toLowerCase().includes(search.toLowerCase()));
-    if (category) mapped = mapped.filter(r => r.category_name === category);
+    // Client-side search on code/name (server-side OR on joined columns is complex)
+    if (search) {
+      const q = search.toLowerCase();
+      mapped = mapped.filter(r =>
+        r.product_code.toLowerCase().includes(q) || r.product_name.toLowerCase().includes(q)
+      );
+    }
 
     setRows(mapped);
     setTotal(count ?? 0);
@@ -142,7 +146,7 @@ export default function InventoryTab() {
           </div>
           <div>
             <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Chi nhánh</label>
-            <select value={branchId} onChange={e => setBranchId(e.target.value)} className={inputCls}>
+            <select value={branchId} onChange={e => { setBranchId(e.target.value); setPage(0); }} className={inputCls}>
               <option value="">Tất cả</option>
               {branches.map(b => <option key={b.branch_id} value={b.branch_id}>{b.branch_name}</option>)}
             </select>
@@ -239,7 +243,7 @@ export default function InventoryTab() {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {rows.map((r, i) => {
-              const isLow = lowOnly || r.on_hand <= threshold;
+              const isLow = lowOnly && r.on_hand <= threshold;
               const isOut = r.on_hand === 0;
               const isNeg = r.on_hand < 0;
               const rowCls = isNeg
@@ -257,7 +261,7 @@ export default function InventoryTab() {
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{branchName(r.branch_id)}</td>
                   <td className={`px-4 py-3 text-right font-semibold whitespace-nowrap ${isNeg ? 'text-orange-600 dark:text-orange-400' : isOut ? 'text-red-500' : isLow ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-900 dark:text-white'}`}>
                     {r.on_hand.toLocaleString('vi-VN')}
-                    {isNeg && <span className="ml-1 text-xs">⚠️</span>}
+                    {isNeg && <span className="ml-1 text-xs">⚠</span>}
                     {isOut && !isNeg && <span className="ml-1 text-xs">✕</span>}
                   </td>
                   <td className="px-4 py-3 text-right text-blue-600 dark:text-blue-400 whitespace-nowrap">{r.on_order.toLocaleString('vi-VN')}</td>

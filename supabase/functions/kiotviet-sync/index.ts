@@ -146,110 +146,105 @@ async function syncBranches(db: DB): Promise<number> {
   return rows.length;
 }
 
-// ─── Sync orders — parallel page fetching ────────────────────────────────────
+// ─── Sync invoices (hóa đơn) — parallel page fetching ───────────────────────
 async function syncOrders(db: DB, fromDate: string, toDate?: string, logId?: number): Promise<number> {
   const EXCLUDED_STATUSES = new Set([4, 5]);
   const fromDateMs = new Date(fromDate).getTime();
   const toDateMs   = toDate ? new Date(toDate).getTime() : null;
-  const BATCH      = 3; // pages fetched in parallel per round
+  const API_BATCH  = 10;  // pages fetched in parallel per round (API calls are fast)
+  const WRITE_CHUNK = 2000; // invoices written to DB per round
 
   type KVOrder = {
     id: number; code: string; branchId: number; customerId: number | null;
     customerName: string | null; status: number | string;
-    total: number; discount: number; createdDate: string; modifiedDate: string;
-    orderDetails: Array<{ productId: number; productCode: string; productName: string; quantity: number; price: number; discount: number }>;
+    total: number; purchaseDate: string; modifiedDate: string;
+    invoiceDetails: Array<{ productId: number; productCode: string; productName: string; quantity: number; price: number; discount: number | null }>;
   };
 
-  // lastModifiedTo bounds the server-side query to the target week.
-  // If KiotViet ignores it, early termination still prevents runaway pagination.
-  const extraParams = toDate ? { lastModifiedTo: toDate } : {};
+  const branchFilter = Array.from(INCLUDED_BRANCH_IDS).map(id => `branchIds=${id}`).join('&');
 
-  const fetchPage = (offset: number) =>
-    kvGet('/orders', { lastModifiedFrom: fromDate, ...extraParams, pageSize: PAGE_SIZE, currentItem: offset }) as Promise<{ data: KVOrder[]; total: number }>;
+  const fetchPage = (offset: number) => {
+    const params = toDate
+      ? { fromPurchaseDate: fromDate, toPurchaseDate: toDate, pageSize: PAGE_SIZE, currentItem: offset }
+      : { lastModifiedFrom: fromDate, pageSize: PAGE_SIZE, currentItem: offset };
+    return kvGet(`/invoices?${branchFilter}`, params) as Promise<{ data: KVOrder[]; total: number }>;
+  };
 
-  // Fetch page 0 first to learn total count
+  // ── Phase 1: Fetch ALL pages into memory ──────────────────────────────────
+  // Separating API fetching from DB writes allows us to parallelize fetching
+  // aggressively without interleaving slow DB operations between each batch.
   const first = await fetchPage(0);
   const total = first.total ?? 0;
+  console.log(`[invoice-sync] params: fromDate=${fromDate} toDate=${toDate ?? 'none'} total=${total}`);
   if (!first.data?.length) return 0;
 
-  // Build all offsets upfront — we stop early via early-termination below
-  const offsets: number[] = [];
-  for (let off = 0; off < total; off += PAGE_SIZE) offsets.push(off);
+  const allRaw: KVOrder[] = [...(first.data ?? [])];
+  const remainingOffsets: number[] = [];
+  for (let off = PAGE_SIZE; off < total; off += PAGE_SIZE) remainingOffsets.push(off);
 
-  let totalSynced = 0;
-  let allPastCount = 0; // consecutive batches where EVERY order is past toDate
+  for (let bi = 0; bi < remainingOffsets.length; bi += API_BATCH) {
+    const batch = remainingOffsets.slice(bi, bi + API_BATCH);
+    const pages = await Promise.all(batch.map(off => fetchPage(off)));
+    for (const p of pages) allRaw.push(...(p.data ?? []));
+    console.log(`[invoice-sync] fetched offsets ${batch[0]}–${batch[batch.length-1]+PAGE_SIZE-1} (accumulated ${allRaw.length})`);
+  }
 
-  for (let bi = 0; bi < offsets.length; bi += BATCH) {
-    const batchOffsets = offsets.slice(bi, bi + BATCH);
+  // ── Phase 2: Filter + deduplicate in memory ───────────────────────────────
+  const seenIds = new Set<number>();
+  const activeOrders: KVOrder[] = [];
+  const cancelledIds: number[] = [];
 
-    // Fetch BATCH pages in parallel (reuse already-fetched page 0)
-    const pages = await Promise.all(
-      batchOffsets.map(off => off === 0 ? Promise.resolve(first) : fetchPage(off))
-    );
+  for (const o of allRaw) {
+    if (seenIds.has(o.id)) continue;
+    seenIds.add(o.id);
 
-    const batchOrders = pages.flatMap(p => p.data ?? []);
-    if (!batchOrders.length) break;
+    const s = typeof o.status === 'number' ? o.status : parseInt(String(o.status), 10) || 0;
+    if (EXCLUDED_STATUSES.has(s)) { cancelledIds.push(o.id); continue; }
 
-    // Early termination: all orders in this batch are past toDate → no more in-range pages
     if (toDateMs !== null) {
-      const allPast = batchOrders.every(o =>
-        new Date(o.modifiedDate ?? o.createdDate).getTime() > toDateMs
-      );
-      if (allPast) { if (++allPastCount >= 1) break; }
-      else allPastCount = 0;
+      const ms = new Date(o.purchaseDate).getTime();
+      if (ms < fromDateMs || ms > toDateMs) continue;
+    }
+    activeOrders.push(o);
+  }
+
+  console.log(`[invoice-sync] after filter: active=${activeOrders.length} cancelled=${cancelledIds.length}`);
+
+  if (cancelledIds.length) await db.from('invoices').delete().in('invoice_id', cancelledIds);
+
+  // ── Phase 3: Write to DB in chunks ────────────────────────────────────────
+  let totalSynced = 0;
+  for (let i = 0; i < activeOrders.length; i += WRITE_CHUNK) {
+    const chunk = activeOrders.slice(i, i + WRITE_CHUNK);
+    const chunkIds = chunk.map(o => o.id);
+    const invoiceRows = chunk.map(o => ({
+      invoice_id: o.id, invoice_code: o.code, branch_id: o.branchId,
+      customer_id: o.customerId, customer_name: o.customerName,
+      status: typeof o.status === 'number' ? o.status : parseInt(String(o.status), 10) || 0,
+      total: o.total ?? 0, discount: 0,
+      invoice_date: o.purchaseDate, modified_date: o.modifiedDate ?? o.purchaseDate,
+    }));
+
+    await Promise.all([
+      db.from('invoice_details').delete().in('invoice_id', chunkIds),
+      db.from('invoices').upsert(invoiceRows, { onConflict: 'invoice_id' }).then(({ error }) => { if (error) throw dbErr(error); }),
+    ]);
+
+    const detailRows = chunk.flatMap(o =>
+      (o.invoiceDetails ?? []).map(d => ({
+        invoice_id: o.id, product_id: d.productId, product_code: d.productCode ?? '',
+        product_name: d.productName ?? '', quantity: d.quantity ?? 0,
+        price: d.price ?? 0, discount: d.discount ?? 0,
+      }))
+    );
+    if (detailRows.length) {
+      const { error: dErr } = await db.from('invoice_details').insert(detailRows);
+      if (dErr) throw dbErr(dErr);
     }
 
-    // Split active vs cancelled
-    const activeOrders: KVOrder[] = [];
-    const cancelledIds: number[] = [];
-    for (const o of batchOrders) {
-      const s = typeof o.status === 'number' ? o.status : parseInt(String(o.status), 10) || 0;
-      if (EXCLUDED_STATUSES.has(s)) cancelledIds.push(o.id);
-      else activeOrders.push(o);
-    }
-
-    // Keep only orders created within [fromDate, toDate] for week backfill
-    const filteredOrders = toDateMs !== null
-      ? activeOrders.filter(o => {
-          const ms = new Date(o.createdDate).getTime();
-          return ms >= fromDateMs && ms <= toDateMs;
-        })
-      : activeOrders;
-
-    if (filteredOrders.length || cancelledIds.length) {
-      const orderIds    = filteredOrders.map(o => o.id);
-      const allCleanIds = [...orderIds, ...cancelledIds];
-      const orderRows   = filteredOrders.map(o => ({
-        order_id: o.id, order_code: o.code, branch_id: o.branchId,
-        customer_id: o.customerId, customer_name: o.customerName,
-        status: typeof o.status === 'number' ? o.status : parseInt(String(o.status), 10) || 0,
-        total: o.total ?? 0, discount: o.discount ?? 0,
-        order_date: o.createdDate, modified_date: o.modifiedDate ?? o.createdDate,
-      }));
-
-      // Parallel: delete stale details + upsert headers
-      await Promise.all([
-        allCleanIds.length ? db.from('order_details').delete().in('order_id', allCleanIds) : Promise.resolve(),
-        orderRows.length   ? db.from('orders').upsert(orderRows, { onConflict: 'order_id' }).then(({ error }) => { if (error) throw dbErr(error); }) : Promise.resolve(),
-      ]);
-
-      const detailRows = filteredOrders.flatMap(o =>
-        (o.orderDetails ?? []).map(d => ({
-          order_id: o.id, product_id: d.productId, product_code: d.productCode ?? '',
-          product_name: d.productName ?? '', quantity: d.quantity ?? 0,
-          price: d.price ?? 0, discount: d.discount ?? 0,
-        }))
-      );
-      if (detailRows.length) {
-        const { error: dErr } = await db.from('order_details').insert(detailRows);
-        if (dErr) throw dbErr(dErr);
-      }
-      if (cancelledIds.length) await db.from('orders').delete().in('order_id', cancelledIds);
-
-      totalSynced += filteredOrders.length;
-    }
-
+    totalSynced += chunk.length;
     if (logId) await updateSyncProgress(db, logId, totalSynced);
+    console.log(`[invoice-sync] wrote chunk ${i/WRITE_CHUNK + 1}: ${totalSynced}/${activeOrders.length}`);
   }
 
   return totalSynced;
@@ -275,50 +270,58 @@ async function computeAvgWeeklySales(db: DB): Promise<Map<number, number>> {
   const windowStart = new Date(startOfCurrentWeek);
   windowStart.setUTCDate(windowStart.getUTCDate() - 12 * 7);
 
-  // Step 1: fetch qualifying orders from DB
-  const { data: qualifyingOrders, error: oErr } = await db.from('orders')
-    .select('order_id, order_date')
-    .gte('order_date', windowStart.toISOString())
-    .lt('order_date', startOfCurrentWeek.toISOString())
-    .in('status', [1, 2, 3])
-    .in('branch_id', Array.from(INCLUDED_BRANCH_IDS));
-  if (oErr) throw dbErr(oErr);
+  console.log(`[avg-sales] window: ${windowStart.toISOString()} → ${startOfCurrentWeek.toISOString()}`);
 
-  const orderDateMap = new Map<number, string>(
-    (qualifyingOrders ?? []).map(o => [o.order_id, o.order_date])
-  );
-  const orderIds = [...orderDateMap.keys()];
-  if (!orderIds.length) return new Map();
-
-  // Step 2: fetch order details in chunks of 500 to stay within URL limits
-  const CHUNK = 500;
+  // Paginate invoice_details directly using an !inner join on invoices.
+  // This avoids fetching invoice IDs first — one pagination loop handles everything.
+  // Server cap is 1000 rows/request; with ~500K detail rows across 12 weeks → ~500 requests.
+  const branchList = Array.from(INCLUDED_BRANCH_IDS).join(',');
   const weeklyQty = new Map<number, Map<string, number>>();
+  let detailOffset = 0;
+  const PAGE = 1000;
 
-  for (let i = 0; i < orderIds.length; i += CHUNK) {
-    const chunk = orderIds.slice(i, i + CHUNK);
-    const { data: details, error: dErr } = await db.from('order_details')
-      .select('product_id, quantity, order_id')
-      .in('order_id', chunk);
+  while (true) {
+    const { data: rows, error: dErr } = await db.from('invoice_details')
+      .select('product_id, quantity, invoices!inner(invoice_date)')
+      .filter('invoices.invoice_date', 'gte', windowStart.toISOString())
+      .filter('invoices.invoice_date', 'lt', startOfCurrentWeek.toISOString())
+      .filter('invoices.status', 'in', `(1,2,3)`)
+      .filter('invoices.branch_id', 'in', `(${branchList})`)
+      .order('id')
+      .range(detailOffset, detailOffset + PAGE - 1);
     if (dErr) throw dbErr(dErr);
+    if (!rows?.length) break;
 
-    for (const row of details ?? []) {
-      const orderDate = orderDateMap.get(row.order_id);
-      if (!orderDate) continue;
-      const weekKey = isoWeekKey(new Date(orderDate));
+    for (const row of rows) {
+      const inv = (row as any).invoices;
+      const invoiceDate = Array.isArray(inv) ? inv[0]?.invoice_date : inv?.invoice_date;
+      if (!invoiceDate) continue;
+      const weekKey = isoWeekKey(new Date(invoiceDate));
       if (!weeklyQty.has(row.product_id)) weeklyQty.set(row.product_id, new Map());
       const wMap = weeklyQty.get(row.product_id)!;
       wMap.set(weekKey, (wMap.get(weekKey) ?? 0) + (row.quantity ?? 0));
     }
+
+    if (rows.length < PAGE) break;
+    detailOffset += PAGE;
+    if (detailOffset % 10000 === 0) console.log(`[avg-sales] details scanned: ${detailOffset}`);
   }
 
-  // Step 3: compute averages (exclude zero-weeks)
+  console.log(`[avg-sales] total detail rows scanned: ${detailOffset + PAGE}`);
+
+  // avg = total_qty / weeks_where_product_had_sales (velocity metric)
   const avgMap = new Map<number, number>();
   for (const [productId, wMap] of weeklyQty) {
-    const nonZeroWeeks = [...wMap.values()].filter(q => q > 0);
-    if (nonZeroWeeks.length > 0) {
-      avgMap.set(productId, nonZeroWeeks.reduce((a, b) => a + b, 0) / nonZeroWeeks.length);
+    const activeWeeks = [...wMap.values()].filter(q => q > 0);
+    if (activeWeeks.length > 0) {
+      avgMap.set(productId, activeWeeks.reduce((a, b) => a + b, 0) / activeWeeks.length);
     }
   }
+
+  // Diagnostic: log result for WTFMCRTD (product_id=27933924)
+  const debugId = 27933924;
+  const debugWMap = weeklyQty.get(debugId);
+  console.log(`[avg-sales] WTFMCRTD(${debugId}): weeks=${debugWMap?.size ?? 0} avg=${avgMap.get(debugId)}`);
 
   return avgMap;
 }
@@ -367,7 +370,11 @@ async function syncInventory(db: DB, branchIds: number[], fromDate: string | nul
     if (!allProducts.length) break;
 
     const productRows = products.map(p => {
-      const included = (p.inventories ?? []).filter(inv => INCLUDED_BRANCH_IDS.has(inv.branchId));
+      const included    = (p.inventories ?? []).filter(inv => INCLUDED_BRANCH_IDS.has(inv.branchId));
+      const onHand      = included.reduce((s, inv) => s + (inv.onHand   ?? 0), 0);
+      const onOrder     = included.reduce((s, inv) => s + (inv.onOrder  ?? 0), 0);
+      const reserved    = included.reduce((s, inv) => s + (inv.reserved ?? 0), 0);
+      const avgSales    = avgMap.get(p.id) ?? 0;
       return {
         product_id:       p.id,
         code:             p.code,
@@ -378,14 +385,33 @@ async function syncInventory(db: DB, branchIds: number[], fromDate: string | nul
         base_price:       p.basePrice,
         is_active:        p.isActive ?? true,
         modified_date:    p.modifiedDate,
-        on_hand:          included.reduce((s, inv) => s + (inv.onHand  ?? 0), 0),
-        on_order:         included.reduce((s, inv) => s + (inv.onOrder ?? 0), 0),
-        reserved:         included.reduce((s, inv) => s + (inv.reserved ?? 0), 0),
-        avg_weekly_sales: avgMap.get(p.id) ?? 0,
+        on_hand:          onHand,
+        on_order:         onOrder,
+        reserved:         reserved,
+        avg_weekly_sales: avgSales,
+        weeks_left:       avgSales > 0 ? (onHand + onOrder - reserved) / avgSales : null,
       };
     });
-    const { error: pErr } = await db.from('products').upsert(productRows, { onConflict: 'product_id' });
-    if (pErr) throw dbErr(pErr);
+    const branchInventoryRows = products.flatMap(p =>
+      (p.inventories ?? [])
+        .filter(inv => INCLUDED_BRANCH_IDS.has(inv.branchId))
+        .map(inv => ({
+          product_id: p.id,
+          branch_id:  inv.branchId,
+          on_hand:    inv.onHand  ?? 0,
+          on_order:   inv.onOrder ?? 0,
+          reserved:   inv.reserved ?? 0,
+        }))
+    );
+
+    const [pRes, biRes] = await Promise.all([
+      db.from('products').upsert(productRows, { onConflict: 'product_id' }),
+      branchInventoryRows.length
+        ? db.from('product_inventory_by_branch').upsert(branchInventoryRows, { onConflict: 'product_id,branch_id' })
+        : Promise.resolve({ error: null }),
+    ]);
+    if (pRes.error)  throw dbErr(pRes.error);
+    if (biRes.error) throw dbErr(biRes.error);
 
     totalSynced += products.length;
     currentItem += allProducts.length;

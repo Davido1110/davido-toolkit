@@ -1,53 +1,33 @@
 import { useState } from 'react';
-import DashboardTab  from './components/DashboardTab';
-import InventoryTab  from './components/InventoryTab';
-import SyncLogsTab   from './components/SyncLogsTab';
-import SettingsTab   from './components/SettingsTab';
-import { getStoredConfig } from './lib/supabase';
+import DashboardTab from './components/DashboardTab';
+import AlertTab     from './components/AlertTab';
+import SyncLogsTab  from './components/SyncLogsTab';
 
 const TABS = [
   { id: 'dashboard', label: 'Dashboard' },
-  { id: 'inventory', label: 'Tồn kho' },
+  { id: 'alert',     label: '⚠️ Cảnh báo' },
   { id: 'logs',      label: 'Sync Logs' },
-  { id: 'settings',  label: 'Settings' },
 ] as const;
 
 type TabId = typeof TABS[number]['id'];
 
 export default function KiotVietSync() {
-  const [tab, setTab]           = useState<TabId>('dashboard');
-  const [connected, setConnected] = useState(true); // always connected via hardcoded defaults
-
-  function handleSettingsSaved() {
-    setConnected(!!getStoredConfig());
-  }
+  const [tab, setTab] = useState<TabId>('dashboard');
 
   return (
     <div className="min-h-full bg-gray-50 dark:bg-gray-950">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-        <div className="flex items-center gap-3">
-          <span className="text-2xl">🔄</span>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900 dark:text-white">KiotViet Sync</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {connected
-                ? 'Kết nối Supabase: OK'
-                : 'Chưa kết nối — vào Settings để cấu hình'}
-            </p>
-          </div>
-          {connected && (
-            <span className="ml-auto flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-              <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-              Connected
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Tab bar */}
+      {/* Combined header + tab bar */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 px-6">
-        <nav className="flex gap-1" aria-label="Tabs">
+        <div className="flex items-center gap-3 pt-4 pb-0">
+          <span className="text-xl">🔄</span>
+          <h1 className="text-base font-bold text-gray-900 dark:text-white">KiotViet Sync</h1>
+          <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 ml-auto pb-1">
+            <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+            Connected
+          </span>
+        </div>
+
+        <nav className="flex gap-1 mt-1" aria-label="Tabs">
           {TABS.map(t => (
             <button
               key={t.id}
@@ -67,9 +47,8 @@ export default function KiotVietSync() {
       {/* Content */}
       <div className="p-6">
         {tab === 'dashboard' && <DashboardTab />}
-        {tab === 'inventory' && <InventoryTab />}
+        {tab === 'alert'     && <AlertTab />}
         {tab === 'logs'      && <SyncLogsTab />}
-        {tab === 'settings'  && <SettingsTab onSaved={handleSettingsSaved} />}
       </div>
     </div>
   );
