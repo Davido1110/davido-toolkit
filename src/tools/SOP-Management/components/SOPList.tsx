@@ -1,6 +1,30 @@
 import { useEffect, useState } from 'react';
 import { getSOPs, deleteSOP, updateSOP } from '../lib/firestore';
-import type { SOP } from '../types';
+import type { SOP, AssigneeRole } from '../types';
+
+function ConfirmDialog({ message, onConfirm, onCancel }: {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-80 flex flex-col gap-4">
+        <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed">{message}</p>
+        <div className="flex gap-3 justify-end">
+          <button onClick={onCancel}
+            className="px-4 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+            Huỷ
+          </button>
+          <button onClick={onConfirm}
+            className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
+            Xóa
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   onView: (sop: SOP) => void;
@@ -168,6 +192,8 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'draft' | 'published'>('all');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [filterRole, setFilterRole] = useState<AssigneeRole | 'all'>('all');
+  const [confirmSOP, setConfirmSOP] = useState<SOP | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [groupMode, setGroupMode] = useState<GroupMode>('category');
 
@@ -189,8 +215,13 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
   }
 
   async function handleDelete(sop: SOP) {
-    if (!confirm(`Xóa SOP "${sop.title}"?`)) return;
-    await deleteSOP(sop.id);
+    setConfirmSOP(sop);
+  }
+
+  async function confirmDelete() {
+    if (!confirmSOP) return;
+    await deleteSOP(confirmSOP.id);
+    setConfirmSOP(null);
     load();
   }
 
@@ -202,7 +233,8 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
       s.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
     const matchStatus = filterStatus === 'all' || s.status === filterStatus;
     const matchCat = filterCategory === 'all' || s.category === filterCategory;
-    return matchSearch && matchStatus && matchCat;
+    const matchRole = filterRole === 'all' || s.roles.includes(filterRole as AssigneeRole);
+    return matchSearch && matchStatus && matchCat && matchRole;
   });
 
   // Group by category if enabled
@@ -248,6 +280,14 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
   }
 
   return (
+    <>
+    {confirmSOP && (
+      <ConfirmDialog
+        message={`Xóa SOP "${confirmSOP.title}"?`}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmSOP(null)}
+      />
+    )}
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -281,6 +321,15 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
           <option value="all">Tất cả</option>
           <option value="published">Published</option>
           <option value="draft">Nháp</option>
+        </select>
+
+        {/* Role filter */}
+        <select value={filterRole} onChange={e => setFilterRole(e.target.value as typeof filterRole)}
+          className="px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="all">Tất cả vai trò</option>
+          <option value="cmo">CMO</option>
+          <option value="lead">Leader</option>
+          <option value="staff">Nhân viên</option>
         </select>
 
         {/* Divider */}
@@ -342,5 +391,6 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
         : renderSops(filtered)
       }
     </div>
+    </>
   );
 }
