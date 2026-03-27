@@ -1,0 +1,22 @@
+name: KiotViet Weekly Sync
+
+on:
+  schedule:
+    - cron: '0 19 * * 0'  # Sunday 19:00 UTC = Monday 02:00 Vietnam (ICT, UTC+7)
+  workflow_dispatch:        # allow manual trigger from GitHub Actions UI
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger full sync (invoices + products)
+        run: |
+          curl -sf -X POST "${{ secrets.SUPABASE_FUNCTION_URL }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"sync_type":"full"}' \
+            --max-time 160
+        # sync_type "full" = branches + orders (from lastSync to now) + products + avg_weekly_sales
+        # lastSync is read from sync_logs — handles gaps of any length automatically

@@ -10,6 +10,7 @@ interface Week {
   syncing: boolean;
   liveCount: number;
   error: string;
+  isCurrent?: boolean;
 }
 
 function buildWeeks(): Omit<Week, 'orderCount' | 'syncing' | 'liveCount' | 'error'>[] {
@@ -20,6 +21,18 @@ function buildWeeks(): Omit<Week, 'orderCount' | 'syncing' | 'liveCount' | 'erro
   const fmt = (d: Date) => `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 
   const weeks: Omit<Week, 'orderCount' | 'syncing' | 'liveCount' | 'error'>[] = [];
+
+  // i=0: current in-progress week (Monday → end of today)
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  today.setUTCHours(23, 59, 59, 999);
+  weeks.push({
+    label: 'Tuần này',
+    dateLabel: `${fmt(startOfCurrentWeek)}–hôm nay`,
+    from: startOfCurrentWeek.toISOString(),
+    to: today.toISOString(),
+    isCurrent: true,
+  });
+
   for (let i = 1; i <= 12; i++) {
     const monday = new Date(startOfCurrentWeek);
     monday.setUTCDate(monday.getUTCDate() - i * 7);
@@ -61,10 +74,10 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
     (async () => {
       const updated = await Promise.all(
         weeks.map(async (week) => {
-          const { count } = await db.from('orders')
-            .select('order_id', { count: 'exact', head: true })
-            .gte('order_date', week.from)
-            .lte('order_date', week.to);
+          const { count } = await db.from('invoices')
+            .select('invoice_id', { count: 'exact', head: true })
+            .gte('invoice_date', week.from)
+            .lte('invoice_date', week.to);
           return { ...week, orderCount: count ?? 0 };
         })
       );
@@ -78,10 +91,10 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
 
   async function finishSuccess(idx: number) {
     if (!db) return;
-    const { count } = await db.from('orders')
-      .select('order_id', { count: 'exact', head: true })
-      .gte('order_date', weeks[idx].from)
-      .lte('order_date', weeks[idx].to);
+    const { count } = await db.from('invoices')
+      .select('invoice_id', { count: 'exact', head: true })
+      .gte('invoice_date', weeks[idx].from)
+      .lte('invoice_date', weeks[idx].to);
     setWeeks(prev => prev.map((w, i) =>
       i === idx ? { ...w, syncing: false, orderCount: count ?? 0, liveCount: 0 } : w
     ));
@@ -197,10 +210,10 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 space-y-3">
         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          Backfill đơn hàng — 12 tuần gần nhất
+          Đồng bộ đơn hàng — tuần này + 12 tuần gần nhất
         </p>
         <p className="text-xs text-gray-400">
-          Sync từng tuần để nạp dữ liệu lần đầu. Sau khi đủ 12 tuần, chạy <strong>Sản phẩm</strong> để cập nhật avg_weekly_sales.
+          <strong>Tuần này</strong> (xanh) sync tự động mỗi thứ Hai qua GitHub Actions. Click thủ công để sync ngay. Sau khi sync xong, chạy <strong>Sản phẩm</strong> để cập nhật avg_weekly_sales.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {weeks.map((week, idx) => {
@@ -213,6 +226,8 @@ export default function WeekPickerSync({ onSyncDone }: { onSyncDone?: () => void
                 className={`relative overflow-hidden rounded-lg border text-sm cursor-pointer transition-colors select-none ${
                   week.syncing
                     ? 'border-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 dark:border-indigo-700'
+                    : week.isCurrent
+                    ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40'
                     : hasDone
                     ? 'border-green-300 bg-green-50 dark:bg-green-900/20 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/40'
                     : 'border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
