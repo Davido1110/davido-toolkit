@@ -89,5 +89,29 @@ export const TOOLS: ToolMeta[] = [
     component: lazy(() => import('../tools/kiotviet-sync')),
   },
 
+  {
+    id: 'rvb-stock-forecast',
+    name: 'Stock Forecast',
+    description: 'Kéo đơn hàng, tồn kho từ KiotViet (ranverbae) — lưu Supabase, cảnh báo hết hàng.',
+    path: '/tools/rvb-stock-forecast',
+    category: 'warehouse',
+    icon: '📦',
+    tags: ['kiotviet', 'rvb', 'sync', 'inventory', 'forecast', 'supabase'],
+    badge: 'New',
+    component: lazy(() => import('../tools/rvb-stock-forecast')),
+  },
+
+  {
+    id: 'mdconvert',
+    name: 'MD Convert',
+    description: 'Convert Word (.docx) and PDF files to AI-optimized Markdown. Self-hosted, batch processing, image descriptions.',
+    path: '/tools/mdconvert',
+    category: 'dev',
+    icon: '📝',
+    tags: ['markdown', 'docx', 'pdf', 'convert', 'AI'],
+    badge: 'Local',
+    component: lazy(() => import('../tools/mdconvert')),
+  },
+
 // Add more tools here — each with its own lazy import
 ];

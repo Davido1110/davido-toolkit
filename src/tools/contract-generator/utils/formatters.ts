@@ -7,10 +7,11 @@ export function splitDate(isoDate: string) {
 }
 
 /** Suggest contract number from date + type suffix */
-export function suggestSoHopDong(isoDate: string, type: 'photo' | 'stylist' | 'ecom') {
+export function suggestSoHopDong(isoDate: string, type: 'photo' | 'stylist' | 'ecom' | 'livestream') {
   if (!isoDate) return ''
   const [y, m, d] = isoDate.split('-')
   if (type === 'ecom') return `${m}${d}/HĐLEONARDO-${y}`
+  if (type === 'livestream') return `${d}${m}${y}/HĐLEONARDO`
   return `${m}${d}/${y}/TB-LEO`
 }
 

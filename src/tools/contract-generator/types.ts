@@ -1,4 +1,4 @@
-export type ContractType = 'photo' | 'stylist' | 'ecom'
+export type ContractType = 'photo' | 'stylist' | 'ecom' | 'livestream'
 
 export interface CommonFields {
   // Bên B info
@@ -48,4 +48,14 @@ export interface EcomFields extends CommonFields {
   // tong_gia_tri auto-calculated
 }
 
-export type ContractFields = PhotoFields | StylistFields | EcomFields
+export interface LivestreamFields extends CommonFields {
+  type: 'livestream'
+  kenh_livestream: string
+  thoi_luong: string
+  thu_lao: string          // raw number string, e.g. "5000000"
+  ngay_thanh_toan: string  // day of month, e.g. "15"
+  ngay_ket_thuc: string    // YYYY-MM-DD
+  // Bank info used for payment reference — already in CommonFields
+}
+
+export type ContractFields = PhotoFields | StylistFields | EcomFields | LivestreamFields

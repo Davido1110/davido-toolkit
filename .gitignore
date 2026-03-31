@@ -13,3 +13,9 @@ dist/
 # Local env
 .env
 .env.local
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# Supabase CLI temp files
+supabase/.temp/

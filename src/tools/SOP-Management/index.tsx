@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import SOPList from './components/SOPList';
 import SOPBuilder from './components/SOPBuilder';
 import SOPViewer from './components/SOPViewer';
+import FlowPreview from './components/FlowPreview';
 import OnboardingDashboard from './components/OnboardingDashboard';
 import LearningPath from './components/LearningPath';
 import AIChat from './components/AIChat';
@@ -23,6 +24,7 @@ export default function SOPManagement() {
   const isLead = profile?.role === 'manager';
 
   const [view, setView] = useState<View>({ type: 'tab', tab: 'list' });
+  const [selectedSop, setSelectedSop] = useState<SOP | null>(null);
 
   const activeTab = view.type === 'tab' ? view.tab : view.type === 'view' ? view.prevTab : 'list';
 
@@ -75,16 +77,25 @@ export default function SOPManagement() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0">
-        {/* SOP List */}
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {/* SOP List — split layout */}
         {(view.type === 'tab' && view.tab === 'list') && (
-          <div className="space-y-6">
-            <SOPList
-              onView={handleViewSOP}
-              onEdit={handleEditSOP}
-              onNew={() => setView({ type: 'create' })}
-            />
-            <SeedButton />
+          <div className="flex gap-4 h-full min-h-0">
+            {/* Left: list */}
+            <div className="w-[52%] flex flex-col min-h-0 overflow-y-auto pr-2">
+              <SOPList
+                onView={handleViewSOP}
+                onEdit={handleEditSOP}
+                onNew={() => setView({ type: 'create' })}
+                onSelect={setSelectedSop}
+                selectedSopId={selectedSop?.id}
+              />
+              <SeedButton />
+            </div>
+            {/* Right: flowchart preview */}
+            <div className="flex-1 min-h-0 border-l border-gray-200 dark:border-gray-700 pl-4">
+              <FlowPreview sop={selectedSop} onOpen={handleViewSOP} />
+            </div>
           </div>
         )}
 

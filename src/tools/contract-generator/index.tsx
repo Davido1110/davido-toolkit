@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { ContractType, PhotoFields, StylistFields, EcomFields, ContractFields } from './types'
+import { ContractType, PhotoFields, StylistFields, EcomFields, LivestreamFields, ContractFields } from './types'
 import { suggestSoHopDong, suggestSoBbnt } from './utils/formatters'
 import { calcStylistTotal } from './generators/buildStylistData'
 import { calcEcomTotal } from './generators/buildEcomData'
 import { buildHDPhotoData, buildBBNTPhotoData } from './generators/buildPhotoData'
 import { buildHDStylistData, buildBBNTStylistData } from './generators/buildStylistData'
 import { buildHDEcomData, buildBBNTEcomData } from './generators/buildEcomData'
+import { buildHDLivestreamData } from './generators/buildLivestreamData'
 import { fillAndDownload } from './utils/fillTemplate'
 import { formatCurrency } from './utils/numberToWords'
 
@@ -29,6 +30,12 @@ const CONTRACT_TYPES = [
     icon: '🛒',
     label: 'Ecom',
     desc: 'Hợp đồng chụp ảnh nền trắng e-commerce',
+  },
+  {
+    id: 'livestream' as ContractType,
+    icon: '🎙️',
+    label: 'Livestream',
+    desc: 'Hợp đồng dịch vụ host livestream',
   },
 ]
 
@@ -97,6 +104,31 @@ function quickFillStylist(): StylistFields {
   }
 }
 
+function quickFillLivestream(): LivestreamFields {
+  return {
+    type: 'livestream',
+    ho_ten: 'Nguyễn Thị Mai',
+    cccd: '079201012345',
+    ngay_cap: '01/01/2024',
+    noi_cap: 'Cục trưởng Cục Cảnh sát QLHC về TTXH TP.HCM',
+    dia_chi: '123 Lê Văn Việt, TP. Thủ Đức, TP.HCM',
+    dien_thoai: '0901234567',
+    email: 'nguyenthimai@gmail.com',
+    ngay_ky: '2026-03-25',
+    so_hop_dong: '25032026/HĐLEONARDO',
+    ten_tai_khoan: 'NGUYỄN THỊ MAI',
+    so_tai_khoan: '0901234567',
+    ngan_hang: 'MB BANK – NGÂN HÀNG QUÂN ĐỘI',
+    kenh_livestream: 'TikTok Shop Leonardo',
+    thoi_luong: '02 ca/ngày, mỗi ca 02 tiếng',
+    thu_lao: '5000000',
+    ngay_thanh_toan: '15',
+    ngay_ket_thuc: '2026-06-25',
+    ngay_bbnt: '2026-03-25',
+    so_bbnt: '',
+  }
+}
+
 function quickFillEcom(): EcomFields {
   return {
     type: 'ecom',
@@ -125,6 +157,10 @@ function defaultStylist(): StylistFields {
 }
 function defaultEcom(): EcomFields {
   return { ...defaultCommon(), type: 'ecom', so_tam: '', drive_link_1: '', drive_link_2: '', drive_link_3: '' }
+}
+function defaultLivestream(): LivestreamFields {
+  const today = new Date().toISOString().split('T')[0]
+  return { ...defaultCommon(), type: 'livestream', kenh_livestream: '', thoi_luong: '', thu_lao: '', ngay_thanh_toan: '', ngay_ket_thuc: today }
 }
 
 // ─── Input helpers ────────────────────────────────────────────────────────────
@@ -173,12 +209,19 @@ function SummaryBox({ fields }: { fields: ContractFields }) {
         <div>Indoor: {c.indoor} look × 660.000 = {formatCurrency(c.tong_indoor)} VNĐ</div>
       </div>
     )
-  } else {
+  } else if (fields.type === 'ecom') {
     const c = calcEcomTotal(fields)
     total = c.total
     extra = (
       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
         {c.soTam} tấm × 60.000 = {formatCurrency(c.total)} VNĐ
+      </div>
+    )
+  } else {
+    total = parseInt(fields.thu_lao.replace(/\D/g, ''), 10) || 0
+    extra = (
+      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        Thù lao: {formatCurrency(total)} VNĐ/tháng
       </div>
     )
   }
@@ -220,7 +263,10 @@ export default function ContractGenerator() {
 
   function selectType(t: ContractType) {
     setContractType(t)
-    setFields(t === 'photo' ? defaultPhoto() : t === 'stylist' ? defaultStylist() : defaultEcom())
+    if (t === 'photo') setFields(defaultPhoto())
+    else if (t === 'stylist') setFields(defaultStylist())
+    else if (t === 'ecom') setFields(defaultEcom())
+    else setFields(defaultLivestream())
     setStep('form')
   }
 
@@ -229,7 +275,7 @@ export default function ContractGenerator() {
   }
 
   // When date fields are first populated, auto-fill suggestion if empty
-  function handleDateChange(key: 'ngay_ky' | 'ngay_bbnt', value: string) {
+  function handleDateChange(key: 'ngay_ky' | 'ngay_bbnt' | 'ngay_ket_thuc', value: string) {
     setFields(prev => {
       if (!prev) return prev
       const next = { ...prev, [key]: value } as ContractFields
@@ -259,12 +305,14 @@ export default function ContractGenerator() {
         } else {
           await fillAndDownload('/templates/BBNT_Stylist.docx', buildBBNTStylistData(fields), `BBNT_Stylist_${name}_${date}.docx`)
         }
-      } else {
+      } else if (fields.type === 'ecom') {
         if (docType === 'hd') {
           await fillAndDownload('/templates/HD_Ecom.docx', buildHDEcomData(fields), `HD_Ecom_${name}_${date}.docx`)
         } else {
           await fillAndDownload('/templates/BBNT_Ecom.docx', buildBBNTEcomData(fields), `BBNT_Ecom_${name}_${date}.docx`)
         }
+      } else {
+        await fillAndDownload('/templates/HD_Livestream.docx', buildHDLivestreamData(fields), `HD_Livestream_${name}_${date}.docx`)
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Lỗi không xác định')
@@ -307,7 +355,8 @@ export default function ContractGenerator() {
   function quickFill() {
     if (contractType === 'photo') setFields(quickFillPhoto())
     else if (contractType === 'stylist') setFields(quickFillStylist())
-    else setFields(quickFillEcom())
+    else if (contractType === 'ecom') setFields(quickFillEcom())
+    else setFields(quickFillLivestream())
   }
 
   // ── Form screen ─────────────────────────────────────────────────────────────
@@ -378,6 +427,27 @@ export default function ContractGenerator() {
         </div>
       </div>
 
+      {/* Section: Livestream details */}
+      {fields.type === 'livestream' && (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+          <SectionTitle>Thông tin Livestream</SectionTitle>
+          <Field label="Kênh Livestream">
+            <Input value={fields.kenh_livestream} onChange={e => update('kenh_livestream', e.target.value)} placeholder="TikTok Shop Leonardo" />
+          </Field>
+          <Field label="Thời lượng">
+            <Input value={fields.thoi_luong} onChange={e => update('thoi_luong', e.target.value)} placeholder="02 ca/ngày, mỗi ca 02 tiếng" />
+          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="Ngày thanh toán hàng tháng">
+              <Input type="number" min="1" max="31" value={fields.ngay_thanh_toan} onChange={e => update('ngay_thanh_toan', e.target.value)} placeholder="15" />
+            </Field>
+            <Field label="Ngày kết thúc hợp đồng">
+              <Input type="date" value={fields.ngay_ket_thuc} onChange={e => handleDateChange('ngay_ket_thuc', e.target.value)} />
+            </Field>
+          </div>
+        </div>
+      )}
+
       {/* Section: Thanh toán */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-4">
         <SectionTitle>Thông tin thanh toán</SectionTitle>
@@ -419,12 +489,17 @@ export default function ContractGenerator() {
             <Input type="number" min="0" value={fields.so_tam} onChange={e => update('so_tam', e.target.value)} placeholder="0" />
           </Field>
         )}
+        {fields.type === 'livestream' && (
+          <Field label="Thù lao (VNĐ/tháng)">
+            <Input type="number" min="0" value={fields.thu_lao} onChange={e => update('thu_lao', e.target.value)} placeholder="5000000" />
+          </Field>
+        )}
 
         <SummaryBox fields={fields} />
       </div>
 
       {/* Section: BBNT */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+      {fields.type !== 'livestream' && <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-6 space-y-4">
         <SectionTitle>Thông tin Biên Bản Nghiệm Thu</SectionTitle>
         <div className="grid grid-cols-2 gap-4">
           <Field label="Ngày BBNT">
@@ -462,7 +537,7 @@ export default function ContractGenerator() {
             </Field>
           </>
         )}
-      </div>
+      </div>}
 
       {/* Error */}
       {error && (
@@ -472,7 +547,7 @@ export default function ContractGenerator() {
       )}
 
       {/* Download buttons */}
-      <div className="grid grid-cols-2 gap-4 pb-8">
+      <div className={`grid gap-4 pb-8 ${fields.type === 'livestream' ? 'grid-cols-1' : 'grid-cols-2'}`}>
         <button
           onClick={() => download('hd')}
           disabled={!!downloading}
@@ -483,16 +558,18 @@ export default function ContractGenerator() {
           ) : '📄'}
           Tải Hợp Đồng
         </button>
-        <button
-          onClick={() => download('bbnt')}
-          disabled={!!downloading}
-          className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors disabled:opacity-60"
-        >
-          {downloading === 'bbnt' ? (
-            <span className="animate-spin">⏳</span>
-          ) : '✅'}
-          Tải Biên Bản NT
-        </button>
+        {fields.type !== 'livestream' && (
+          <button
+            onClick={() => download('bbnt')}
+            disabled={!!downloading}
+            className="flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors disabled:opacity-60"
+          >
+            {downloading === 'bbnt' ? (
+              <span className="animate-spin">⏳</span>
+            ) : '✅'}
+            Tải Biên Bản NT
+          </button>
+        )}
       </div>
     </div>
   )

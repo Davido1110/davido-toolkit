@@ -30,6 +30,8 @@ interface Props {
   onView: (sop: SOP) => void;
   onEdit: (sop: SOP) => void;
   onNew: () => void;
+  onSelect?: (sop: SOP) => void;
+  selectedSopId?: string;
 }
 
 type ViewMode = 'list' | 'card' | 'table';
@@ -42,6 +44,13 @@ const CATEGORY_COLORS: Record<string, string> = {
   Operations: 'bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300',
 };
 const catColor = (c: string) => CATEGORY_COLORS[c] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300';
+
+const CAT_BORDER: Record<string, string> = {
+  Marketing:  'border-l-blue-500',
+  Content:    'border-l-purple-500',
+  Ecom:       'border-l-orange-500',
+  Operations: 'border-l-teal-500',
+};
 
 function ActionButtons({ sop, onView, onEdit, onToggle, onDelete }: {
   sop: SOP;
@@ -65,6 +74,35 @@ function ActionButtons({ sop, onView, onEdit, onToggle, onDelete }: {
       <button onClick={onDelete}
         className="px-2.5 py-1 text-xs text-red-500 dark:text-red-400 border border-red-100 dark:border-red-900 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
         Xóa
+      </button>
+    </div>
+  );
+}
+
+function CompactActions({ sop, onView, onEdit, onToggle, onDelete }: {
+  sop: SOP;
+  onView: () => void; onEdit: () => void;
+  onToggle: () => void; onDelete: () => void;
+}) {
+  const btn = 'inline-flex items-center justify-center w-6 h-6 rounded text-sm leading-none transition-colors focus:outline-none';
+  return (
+    <div className="flex items-center gap-0.5 shrink-0">
+      <button title="Xem" onClick={e => { e.stopPropagation(); onView(); }}
+        className={`${btn} text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30`}>
+        ▶
+      </button>
+      <button title="Sửa" onClick={e => { e.stopPropagation(); onEdit(); }}
+        className={`${btn} text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30`}>
+        ✎
+      </button>
+      <button title={sop.status === 'published' ? 'Unpublish' : 'Publish'}
+        onClick={e => { e.stopPropagation(); onToggle(); }}
+        className={`${btn} ${sop.status === 'published' ? 'text-teal-500 hover:text-teal-700 hover:bg-teal-50 dark:hover:bg-teal-900/30' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/30'}`}>
+        {sop.status === 'published' ? '◎' : '○'}
+      </button>
+      <button title="Xóa" onClick={e => { e.stopPropagation(); onDelete(); }}
+        className={`${btn} text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30`}>
+        ✕
       </button>
     </div>
   );
@@ -100,32 +138,35 @@ function RowItem({ sop, onView, onEdit, onToggle, onDelete }: {
 }
 
 // ── Card ──────────────────────────────────────────────────────────────────────
-function CardItem({ sop, onView, onEdit, onToggle, onDelete }: {
+function CardItem({ sop, selected, onSelect, onView, onEdit, onToggle, onDelete }: {
   sop: SOP;
+  selected?: boolean;
+  onSelect?: () => void;
   onView: () => void; onEdit: () => void; onToggle: () => void; onDelete: () => void;
 }) {
   return (
-    <div onClick={onView} className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl p-4 flex flex-col gap-3 hover:border-blue-300 dark:hover:border-blue-600 transition-colors cursor-pointer">
-      <div className="flex items-start justify-between gap-2">
-        <span className={`text-xs px-2 py-0.5 rounded font-medium ${catColor(sop.category)}`}>
-          {sop.category}
-        </span>
-        {sop.status === 'draft' && (
-          <span className="text-xs px-1.5 py-0.5 rounded bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Nháp</span>
-        )}
-      </div>
-      <div>
-        <h3 onClick={onView}
-          className="font-semibold text-sm text-gray-900 dark:text-white hover:text-blue-600 cursor-pointer leading-snug">
+    <div
+      onClick={onSelect ?? onView}
+      className={`bg-white dark:bg-gray-800 border border-l-4 ${CAT_BORDER[sop.category] ?? 'border-l-gray-300'} rounded-xl p-3 flex flex-col gap-2 hover:shadow-sm transition-all cursor-pointer ${
+        selected
+          ? 'border-blue-400 dark:border-blue-500 shadow-sm ring-1 ring-blue-300 dark:ring-blue-600'
+          : 'border-gray-100 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600'
+      }`}
+    >
+      <div className="flex items-start justify-between gap-1.5">
+        <h3 className="font-semibold text-sm text-gray-900 dark:text-white leading-snug line-clamp-2 flex-1 min-w-0">
           {sop.title}
         </h3>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-          {sop.description || '—'}
-        </p>
+        {sop.status === 'draft' && (
+          <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 font-medium leading-none mt-0.5">Nháp</span>
+        )}
       </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+        {sop.description || '—'}
+      </p>
       <div onClick={e => e.stopPropagation()} className="flex items-center justify-between mt-auto pt-2 border-t border-gray-100 dark:border-gray-700">
-        <span className="text-xs text-gray-400">{sop.steps.length} bước</span>
-        <ActionButtons sop={sop} onView={onView} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
+        <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">{sop.steps.length} bước</span>
+        <CompactActions sop={sop} onView={onView} onEdit={onEdit} onToggle={onToggle} onDelete={onDelete} />
       </div>
     </div>
   );
@@ -185,7 +226,7 @@ function TableView({ sops, onView, onEdit, onToggle, onDelete }: {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-export default function SOPList({ onView, onEdit, onNew }: Props) {
+export default function SOPList({ onView, onEdit, onNew, onSelect, selectedSopId }: Props) {
 
   const [sops, setSops] = useState<SOP[]>([]);
   const [loading, setLoading] = useState(true);
@@ -202,6 +243,9 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
     try {
       const data = await getSOPs();
       setSops(data);
+      if (onSelect && data.length > 0 && !selectedSopId) {
+        onSelect(data[0]);
+      }
     } finally {
       setLoading(false);
     }
@@ -263,8 +307,16 @@ export default function SOPList({ onView, onEdit, onNew }: Props) {
     }
     if (viewMode === 'card') {
       return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {list.map(sop => <CardItem key={sop.id} sop={sop} {...actions(sop)} />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 items-start">
+          {list.map(sop => (
+            <CardItem
+              key={sop.id}
+              sop={sop}
+              selected={sop.id === selectedSopId}
+              onSelect={onSelect ? () => onSelect(sop) : undefined}
+              {...actions(sop)}
+            />
+          ))}
         </div>
       );
     }
