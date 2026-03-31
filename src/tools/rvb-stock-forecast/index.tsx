@@ -5,18 +5,31 @@ import SyncLogsTab  from './components/SyncLogsTab';
 import SettingsTab  from './components/SettingsTab';
 import { getStoredConfig } from './lib/supabase';
 
-const TABS = [
+const USER_TABS = [
+  { id: 'alert', label: '⚠️ Cảnh báo' },
+] as const;
+
+const ADMIN_TABS = [
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'alert',     label: '⚠️ Cảnh báo' },
   { id: 'logs',      label: 'Sync Logs' },
   { id: 'settings',  label: 'Settings' },
 ] as const;
 
-type TabId = typeof TABS[number]['id'];
+const ADMIN_PIN = 'rvb2026';
+
+type TabId = typeof ADMIN_TABS[number]['id'];
 
 export default function RVBStockForecast() {
-  const [tab, setTab] = useState<TabId>('dashboard');
+  const [tab, setTab] = useState<TabId>('alert');
   const [connected, setConnected] = useState(() => !!getStoredConfig());
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  function toggleAdmin() {
+    if (isAdmin) { setIsAdmin(false); setTab('alert'); return; }
+    const pin = window.prompt('Admin PIN:');
+    if (pin === ADMIN_PIN) setIsAdmin(true);
+  }
 
   function handleSettingsSaved() {
     setConnected(!!getStoredConfig());
@@ -33,10 +46,17 @@ export default function RVBStockForecast() {
             <span className={`w-2 h-2 rounded-full inline-block ${connected ? 'bg-green-500' : 'bg-gray-400'}`} />
             {connected ? 'Connected' : 'Not connected'}
           </span>
+          <button
+            onClick={toggleAdmin}
+            title={isAdmin ? 'Exit admin' : 'Admin'}
+            className="ml-2 pb-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 text-xs"
+          >
+            {isAdmin ? '🔓' : '🔒'}
+          </button>
         </div>
 
         <nav className="flex gap-1 mt-1" aria-label="Tabs">
-          {TABS.map(t => (
+          {(isAdmin ? ADMIN_TABS : USER_TABS).map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
