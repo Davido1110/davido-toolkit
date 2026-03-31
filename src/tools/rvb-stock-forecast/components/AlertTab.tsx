@@ -199,8 +199,8 @@ export default function AlertTab() {
     const dir = gSortDir === 'asc' ? 1 : -1;
     return [...groups].sort((a, b) => {
       const field = gSortField;
-      const av = (a as Record<string, unknown>)[field] ?? (gSortDir === 'asc' ? Infinity : -Infinity);
-      const bv = (b as Record<string, unknown>)[field] ?? (gSortDir === 'asc' ? Infinity : -Infinity);
+      const av = (a as unknown as Record<string, unknown>)[field] ?? (gSortDir === 'asc' ? Infinity : -Infinity);
+      const bv = (b as unknown as Record<string, unknown>)[field] ?? (gSortDir === 'asc' ? Infinity : -Infinity);
       if (typeof av === 'string' && typeof bv === 'string') return av.localeCompare(bv) * dir;
       return ((av as number) - (bv as number)) * dir;
     });
