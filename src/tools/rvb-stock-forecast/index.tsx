@@ -16,7 +16,7 @@ const ADMIN_TABS = [
   { id: 'settings',  label: 'Settings' },
 ] as const;
 
-const ADMIN_PIN = 'rvb2026';
+const ADMIN_PIN = '0';
 
 type TabId = typeof ADMIN_TABS[number]['id'];
 
