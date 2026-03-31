@@ -1,11 +1,12 @@
-name: KiotViet Weekly Sync
+name: KiotViet Daily Sync
 
 on:
   schedule:
-    - cron: '0 19 * * 0'  # Sunday 19:00 UTC = Monday 02:00 Vietnam (ICT, UTC+7)
+    - cron: '0 19 * * *'  # Every day 19:00 UTC = 02:00 Vietnam (ICT, UTC+7)
   workflow_dispatch:        # allow manual trigger from GitHub Actions UI
 
 jobs:
+  # ── phohangda ────────────────────────────────────────────────────────────────
   sync_orders:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -24,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     needs: sync_orders
-    if: always()   # run even if sync_orders fails — avg_weekly_sales uses DB data ≤1 week old
+    if: always()   # run even if sync_orders fails — avg_weekly_sales uses DB data ≤1 day old
     steps:
       - name: Sync products + inventory + weeks_left
         run: |
@@ -34,4 +35,31 @@ jobs:
             -d '{"sync_type":"products"}' \
             --max-time 120
         # Fetches live inventory from KiotViet, computes avg_weekly_sales from DB, writes weeks_left
-        # Guarantees Cảnh báo tab is always updated every Monday (max 1 week delay)
+        # Guarantees Cảnh báo tab is always updated every day (max 1 day delay)
+
+  # ── ranverbae (RVB) ───────────────────────────────────────────────────────────
+  sync_orders_rvb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Sync RVB orders (7-day incremental)
+        run: |
+          curl -sf -X POST "${{ secrets.SUPABASE_FUNCTION_URL_RVB }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY_RVB }}" \
+            -H "Content-Type: application/json" \
+            -d '{"sync_type":"orders"}' \
+            --max-time 160
+
+  sync_products_rvb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: sync_orders_rvb
+    if: always()
+    steps:
+      - name: Sync RVB products + inventory + weeks_left
+        run: |
+          curl -sf -X POST "${{ secrets.SUPABASE_FUNCTION_URL_RVB }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY_RVB }}" \
+            -H "Content-Type: application/json" \
+            -d '{"sync_type":"products"}' \
+            --max-time 120
