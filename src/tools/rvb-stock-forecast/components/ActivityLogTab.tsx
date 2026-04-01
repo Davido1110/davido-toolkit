@@ -5,7 +5,7 @@ interface LogRow {
   id: number;
   action: string;
   details: Record<string, unknown>;
-  user_agent: string | null;
+  user_name: string | null;
   created_at: string;
 }
 
@@ -32,15 +32,6 @@ function formatDetails(action: string, details: Record<string, unknown>): string
   return JSON.stringify(details);
 }
 
-function shortUA(ua: string | null): string {
-  if (!ua) return '—';
-  if (ua.includes('Chrome'))  return 'Chrome';
-  if (ua.includes('Firefox')) return 'Firefox';
-  if (ua.includes('Safari'))  return 'Safari';
-  if (ua.includes('Edge'))    return 'Edge';
-  return ua.slice(0, 40);
-}
-
 export default function ActivityLogTab() {
   const db = getSupabase();
   const [rows, setRows]       = useState<LogRow[]>([]);
@@ -59,7 +50,7 @@ export default function ActivityLogTab() {
     setError('');
     const { data, error: qErr } = await db
       .from('user_action_logs')
-      .select('id, action, details, user_agent, created_at')
+      .select('id, action, details, user_name, created_at')
       .order('created_at', { ascending: false })
       .range(p * PAGE, p * PAGE + PAGE);
 
@@ -109,9 +100,9 @@ export default function ActivityLogTab() {
             <thead>
               <tr className="bg-gray-50 dark:bg-gray-800/60 text-left text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 <th className="px-4 py-2.5 font-medium">Thời gian</th>
+                <th className="px-4 py-2.5 font-medium">Người dùng</th>
                 <th className="px-4 py-2.5 font-medium">Hành động</th>
                 <th className="px-4 py-2.5 font-medium">Chi tiết</th>
-                <th className="px-4 py-2.5 font-medium">Trình duyệt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -120,16 +111,16 @@ export default function ActivityLogTab() {
                   <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400 whitespace-nowrap font-mono text-xs">
                     {new Date(row.created_at).toLocaleString('vi-VN')}
                   </td>
+                  <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 font-medium whitespace-nowrap">
+                    {row.user_name ?? '—'}
+                  </td>
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <span className={`inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-md ${actionColor(row.action)}`}>
                       {actionLabel(row.action)}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 text-gray-700 dark:text-gray-300 max-w-xs truncate">
+                  <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 max-w-xs truncate">
                     {formatDetails(row.action, row.details)}
-                  </td>
-                  <td className="px-4 py-2.5 text-gray-400 dark:text-gray-500 text-xs whitespace-nowrap">
-                    {shortUA(row.user_agent)}
                   </td>
                 </tr>
               ))}

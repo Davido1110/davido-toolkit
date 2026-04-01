@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import { getSupabase, logAction } from '../lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 
 interface AlertRow {
   product_id: number;
@@ -115,6 +116,8 @@ function buildGroups(rows: AlertRow[]): ProductGroup[] {
 
 export default function AlertTab() {
   const db = getSupabase();
+  const { profile } = useAuth();
+  const userName = profile?.name ?? 'Unknown';
   const [allRows, setAllRows]   = useState<AlertRow[]>([]);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
@@ -301,7 +304,7 @@ export default function AlertTab() {
     if (!db) return;
     setRestoringName(name);
     await db.from('dismissed_products').delete().eq('name', name);
-    await logAction('restore_product', { name });
+    await logAction('restore_product', userName, { name });
     setDismissedList(prev => prev.filter(d => d.name !== name));
     await fetchReport();
     setRestoringName(null);
@@ -314,7 +317,7 @@ export default function AlertTab() {
     const rows = names.map(name => ({ name }));
     const { error: insErr } = await db.from('dismissed_products').upsert(rows);
     if (insErr) { setError(insErr.message); setDismissing(false); return; }
-    await logAction('dismiss_products', { names, count: names.length });
+    await logAction('dismiss_products', userName, { names, count: names.length });
     exitSelectionMode();
     await fetchReport();
     setDismissing(false);
