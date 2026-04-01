@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import DashboardTab from './components/DashboardTab';
-import AlertTab     from './components/AlertTab';
-import SyncLogsTab  from './components/SyncLogsTab';
-import SettingsTab  from './components/SettingsTab';
+import DashboardTab    from './components/DashboardTab';
+import AlertTab        from './components/AlertTab';
+import SyncLogsTab     from './components/SyncLogsTab';
+import SettingsTab     from './components/SettingsTab';
+import ActivityLogTab  from './components/ActivityLogTab';
 import { getStoredConfig } from './lib/supabase';
 
 const USER_TABS = [
@@ -10,10 +11,11 @@ const USER_TABS = [
 ] as const;
 
 const ADMIN_TABS = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'alert',     label: '⚠️ Cảnh báo' },
-  { id: 'logs',      label: 'Sync Logs' },
-  { id: 'settings',  label: 'Settings' },
+  { id: 'dashboard',    label: 'Dashboard' },
+  { id: 'alert',        label: '⚠️ Cảnh báo' },
+  { id: 'logs',         label: 'Sync Logs' },
+  { id: 'activity',     label: '📋 Activity Log' },
+  { id: 'settings',     label: 'Settings' },
 ] as const;
 
 const ADMIN_PIN = '0';
@@ -77,6 +79,7 @@ export default function RVBStockForecast() {
         {tab === 'dashboard' && <DashboardTab />}
         {tab === 'alert'     && <AlertTab />}
         {tab === 'logs'      && <SyncLogsTab />}
+        {tab === 'activity'  && <ActivityLogTab />}
         {tab === 'settings'  && <SettingsTab onSaved={handleSettingsSaved} />}
       </div>
     </div>

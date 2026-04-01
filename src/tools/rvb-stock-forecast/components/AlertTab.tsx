@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { getSupabase } from '../lib/supabase';
+import { getSupabase, logAction } from '../lib/supabase';
 
 interface AlertRow {
   product_id: number;
@@ -301,6 +301,7 @@ export default function AlertTab() {
     if (!db) return;
     setRestoringName(name);
     await db.from('dismissed_products').delete().eq('name', name);
+    await logAction('restore_product', { name });
     setDismissedList(prev => prev.filter(d => d.name !== name));
     await fetchReport();
     setRestoringName(null);
@@ -309,9 +310,11 @@ export default function AlertTab() {
   async function handleDismiss() {
     if (!db || selectedNames.size === 0) return;
     setDismissing(true);
-    const rows = [...selectedNames].map(name => ({ name }));
+    const names = [...selectedNames];
+    const rows = names.map(name => ({ name }));
     const { error: insErr } = await db.from('dismissed_products').upsert(rows);
     if (insErr) { setError(insErr.message); setDismissing(false); return; }
+    await logAction('dismiss_products', { names, count: names.length });
     exitSelectionMode();
     await fetchReport();
     setDismissing(false);

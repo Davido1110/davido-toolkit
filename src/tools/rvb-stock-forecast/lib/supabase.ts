@@ -36,3 +36,15 @@ export function getSupabase() {
     config?.anonKey ?? DEFAULT_ANON_KEY,
   );
 }
+
+export async function logAction(
+  action: string,
+  details: Record<string, unknown> = {},
+): Promise<void> {
+  const db = getSupabase();
+  await db.from('user_action_logs').insert({
+    action,
+    details,
+    user_agent: navigator.userAgent,
+  });
+}
