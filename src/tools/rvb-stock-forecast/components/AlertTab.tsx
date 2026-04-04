@@ -378,10 +378,10 @@ export default function AlertTab() {
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
             {/* View toggle */}
-            <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden text-xs">
-              <button onClick={() => setViewMode('grouped')} className={`px-2.5 py-1.5 font-medium transition-colors ${viewMode === 'grouped' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>Nhóm</button>
-              <button onClick={() => setViewMode('flat')} className={`px-2.5 py-1.5 font-medium transition-colors border-l border-gray-300 dark:border-gray-600 ${viewMode === 'flat' ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>Danh sách</button>
-            </div>
+            <select value={viewMode} onChange={e => setViewMode(e.target.value as ViewMode)} className={inputCls + ' text-xs py-1.5'}>
+              <option value="grouped">Nhóm</option>
+              <option value="flat">Danh sách</option>
+            </select>
             <button
               onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${selectionMode ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
