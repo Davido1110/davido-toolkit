@@ -113,5 +113,17 @@ export const TOOLS: ToolMeta[] = [
     component: lazy(() => import('../tools/mdconvert')),
   },
 
+  {
+    id: 'messenger-analytics',
+    name: 'Messenger Analytics',
+    description: 'Phân tích hội thoại Messenger (Pancake.vn) với Claude AI — tạo báo cáo Marketing, CSKH, R&D, Tổng hợp.',
+    path: '/tools/messenger-analytics',
+    category: 'productivity',
+    icon: '💬',
+    tags: ['messenger', 'analytics', 'AI', 'pancake', 'facebook', 'báo cáo', 'claude'],
+    badge: 'New',
+    component: lazy(() => import('../tools/messenger-analytics')),
+  },
+
 // Add more tools here — each with its own lazy import
 ];

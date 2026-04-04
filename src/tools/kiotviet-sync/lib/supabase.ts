@@ -2,8 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 
 const STORAGE_KEY = 'kiotviet_supabase_config';
 
-const DEFAULT_URL     = 'https://fvmbfhkdycoazhhbclcs.supabase.co';
-const DEFAULT_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ2bWJmaGtkeWNvYXpoaGJjbGNzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MDkxMjEsImV4cCI6MjA4OTk4NTEyMX0.yT8qa9uyZLBBN9NGT728Ljfkz8p1wz_6f-FPqaykKio';
+const DEFAULT_URL      = import.meta.env.VITE_SUPABASE_URL ?? '';
+const DEFAULT_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 export function getStoredConfig(): { url: string; anonKey: string } | null {
   try {

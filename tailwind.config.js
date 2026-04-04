@@ -4,6 +4,10 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Sodo Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        pike: ['Pike', 'ui-serif', 'serif'],
+      },
       colors: {
         brand: {
           50:  '#eff6ff',

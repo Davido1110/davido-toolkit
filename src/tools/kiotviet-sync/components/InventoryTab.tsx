@@ -74,6 +74,9 @@ export default function InventoryTab() {
     if (stockStatus === 'out_of_stock') q = q.eq('on_hand', 0);
     if (stockStatus === 'negative')     q = q.lt('on_hand', 0);
     if (category) q = q.filter('products.category_name', 'eq', category);
+    if (search) {
+      q = q.or(`name.ilike.%${search}%,code.ilike.%${search}%`, { referencedTable: 'products' });
+    }
 
     const { data, count, error: qErr } = await q;
     if (qErr) { setError(qErr.message); setLoading(false); return; }
@@ -83,7 +86,7 @@ export default function InventoryTab() {
       products: { code: string; name: string; category_name: string | null } | { code: string; name: string; category_name: string | null }[];
     };
 
-    let mapped: InventoryRow[] = (data ?? []).map((r: RawRow) => {
+    const mapped: InventoryRow[] = (data ?? []).map((r: RawRow) => {
       const prod = Array.isArray(r.products) ? r.products[0] : r.products;
       return {
         product_id: r.product_id, branch_id: r.branch_id,
@@ -92,14 +95,6 @@ export default function InventoryTab() {
         on_hand: r.on_hand, on_order: r.on_order, reserved: r.reserved,
       };
     });
-
-    // Client-side search on code/name (server-side OR on joined columns is complex)
-    if (search) {
-      const q = search.toLowerCase();
-      mapped = mapped.filter(r =>
-        r.product_code.toLowerCase().includes(q) || r.product_name.toLowerCase().includes(q)
-      );
-    }
 
     setRows(mapped);
     setTotal(count ?? 0);

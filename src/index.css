@@ -2,11 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Pike — headings & important text */
+@font-face {
+  font-family: 'Pike';
+  src: url('/fonts/Pike-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pike';
+  src: url('/fonts/Pike-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pike';
+  src: url('/fonts/Pike-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Sodo Sans — body & normal text */
+@font-face {
+  font-family: 'Sodo Sans';
+  src: url('/fonts/SoDo Sans-Thin.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sodo Sans';
+  src: url('/fonts/SoDo Sans-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sodo Sans';
+  src: url('/fonts/SoDo Sans-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sodo Sans';
+  src: url('/fonts/SoDo Sans-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sodo Sans';
+  src: url('/fonts/SoDo Sans-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Sodo Sans';
+  src: url('/fonts/SoDo Sans-Black.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root {
   height: 100%;
   margin: 0;
+  font-family: 'Sodo Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Scrollbar styling */
