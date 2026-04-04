@@ -116,7 +116,7 @@ function buildGroups(rows: AlertRow[]): ProductGroup[] {
 
 const CATEGORY_GROUP_MAP: Record<string, string> = {
   'T-Shirt': 'TOP', 'Hoodie': 'TOP', 'Jacket': 'TOP', 'Sweater': 'TOP',
-  'Long Sleeve Shirt': 'TOP', 'Polo Shirt': 'TOP', 'Tank Top': 'TOP',
+  'Long Sleeve Shirt': 'TOP', 'Polo Shirt': 'TOP', 'Tank Top': 'TOP', 'Short Sleeve Shirt': 'TOP',
   'Pant': 'BOTTOM', 'Short': 'BOTTOM',
   'Cap': 'OTHER', 'BAG': 'OTHER', 'Bag': 'OTHER', 'Gift': 'OTHER',
   'Sample': 'OTHER', 'Combo': 'OTHER', 'Set': 'OTHER',
