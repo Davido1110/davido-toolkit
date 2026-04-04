@@ -114,6 +114,15 @@ function buildGroups(rows: AlertRow[]): ProductGroup[] {
   });
 }
 
+const CATEGORY_GROUP_MAP: Record<string, string> = {
+  'T-Shirt': 'TOP', 'Hoodie': 'TOP', 'Jacket': 'TOP', 'Sweater': 'TOP',
+  'Long Sleeve Shirt': 'TOP', 'Polo Shirt': 'TOP', 'Tank Top': 'TOP',
+  'Pant': 'BOTTOM', 'Short': 'BOTTOM',
+  'Cap': 'OTHER', 'BAG': 'OTHER', 'Bag': 'OTHER', 'Gift': 'OTHER',
+  'Sample': 'OTHER', 'Combo': 'OTHER', 'Set': 'OTHER',
+};
+const GROUP_ORDER = ['TOP', 'BOTTOM', 'OTHER'];
+
 export default function AlertTab() {
   const db = getSupabase();
   const { profile } = useAuth();
@@ -155,6 +164,9 @@ export default function AlertTab() {
   const [dismissedList, setDismissedList] = useState<{ name: string; dismissed_at: string }[]>([]);
   const [loadingDismissed, setLoadingDismissed] = useState(false);
   const [restoringName, setRestoringName] = useState<string | null>(null);
+
+  // Category group expand
+  const [activeGroup, setActiveGroup] = useState('');
 
   useEffect(() => { if (db) fetchReport(); }, []);
 
@@ -242,7 +254,7 @@ export default function AlertTab() {
   }, [allRows]);
 
   function resetFilters() {
-    setSearch(''); setCategory(''); setUrgency(''); setAlertOnly(false);
+    setSearch(''); setCategory(''); setUrgency(''); setAlertOnly(false); setActiveGroup('');
     setSortField('weeks_left'); setSortDir('asc');
     setGSortField('group_weeks_left'); setGSortDir('asc');
   }
@@ -413,17 +425,13 @@ export default function AlertTab() {
           </div>
         )}
 
-        {/* Row 3: search + category + alertOnly */}
+        {/* Row 3: search + alertOnly */}
         <div className="flex flex-wrap gap-2 items-center">
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="🔍 Tìm SKU / tên sản phẩm..."
             className={`${inputCls} flex-1 min-w-[180px] max-w-xs`}
           />
-          <select value={category} onChange={e => setCategory(e.target.value)} className={inputCls}>
-            <option value="">Tất cả nhóm hàng</option>
-            {categories.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
           <label className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 cursor-pointer whitespace-nowrap">
             <input type="checkbox" id="rvb-alertOnly" checked={alertOnly} onChange={e => setAlertOnly(e.target.checked)}
               className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
@@ -435,6 +443,57 @@ export default function AlertTab() {
             </button>
           )}
         </div>
+
+        {/* Row 4: Category group buttons */}
+        {!loading && categories.length > 0 && (
+          <div className="space-y-2">
+            {/* Group-level buttons */}
+            <div className="flex flex-wrap gap-1.5 items-center">
+              <button
+                onClick={() => { setCategory(''); setActiveGroup(''); }}
+                className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${!category && !activeGroup ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900 border-gray-800 dark:border-gray-200' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              >
+                Tất cả
+              </button>
+              {GROUP_ORDER.map(groupName => {
+                const items = categories.filter(c => (CATEGORY_GROUP_MAP[c] ?? 'OTHER') === groupName);
+                if (items.length === 0) return null;
+                const groupActive = activeGroup === groupName;
+                const hasSelectedChild = items.includes(category);
+                return (
+                  <button
+                    key={groupName}
+                    onClick={() => {
+                      if (groupActive) { setActiveGroup(''); setCategory(''); }
+                      else { setActiveGroup(groupName); setCategory(''); }
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors flex items-center gap-1 ${groupActive || hasSelectedChild ? 'bg-indigo-600 text-white border-indigo-600' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  >
+                    {groupName}
+                    <svg className={`w-3 h-3 transition-transform ${groupActive ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7"/></svg>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Child category buttons — shown when a group is active */}
+            {activeGroup && (() => {
+              const items = categories.filter(c => (CATEGORY_GROUP_MAP[c] ?? 'OTHER') === activeGroup);
+              return (
+                <div className="flex flex-wrap gap-1.5 pl-1">
+                  {items.map(c => (
+                    <button
+                      key={c}
+                      onClick={() => setCategory(category === c ? '' : c)}
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors ${category === c ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-300 dark:border-indigo-700' : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:border-indigo-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-500 font-mono">{error}</p>}
