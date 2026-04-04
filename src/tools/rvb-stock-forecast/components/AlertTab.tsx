@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { getSupabase, logAction } from '../lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -167,6 +167,18 @@ export default function AlertTab() {
 
   // Category group expand
   const [activeGroup, setActiveGroup] = useState('');
+
+  // View mode dropdown
+  const [showViewMenu, setShowViewMenu] = useState(false);
+  const viewMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!showViewMenu) return;
+    function handleClick(e: MouseEvent) {
+      if (viewMenuRef.current && !viewMenuRef.current.contains(e.target as Node)) setShowViewMenu(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showViewMenu]);
 
   useEffect(() => { if (db) fetchReport(); }, []);
 
@@ -377,11 +389,31 @@ export default function AlertTab() {
             </p>
           </div>
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
-            {/* View toggle */}
-            <select value={viewMode} onChange={e => setViewMode(e.target.value as ViewMode)} className={inputCls + ' text-xs py-1.5'}>
-              <option value="grouped">Nhóm</option>
-              <option value="flat">Danh sách</option>
-            </select>
+            {/* View dropdown */}
+            <div className="relative" ref={viewMenuRef}>
+              <button
+                onClick={() => setShowViewMenu(v => !v)}
+                className={`${inputCls} text-xs py-1.5 flex items-center gap-1.5`}
+              >
+                {viewMode === 'grouped' ? 'Nhóm' : 'Danh sách'}
+                <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${showViewMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              {showViewMenu && (
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden min-w-[110px]">
+                  {(['grouped', 'flat'] as ViewMode[]).map(mode => (
+                    <button
+                      key={mode}
+                      onClick={() => { setViewMode(mode); setShowViewMenu(false); }}
+                      className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center gap-2 ${viewMode === mode ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    >
+                      {viewMode === mode && <span className="text-indigo-500">✓</span>}
+                      {viewMode !== mode && <span className="w-3" />}
+                      {mode === 'grouped' ? 'Nhóm' : 'Danh sách'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => selectionMode ? exitSelectionMode() : setSelectionMode(true)}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${selectionMode ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
