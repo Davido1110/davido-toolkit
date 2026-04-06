@@ -339,6 +339,7 @@ async function syncInventory(db: DB, branchIds: number[], fromDate: string | nul
 
   let currentItem = 0;
   let totalSynced = 0;
+  const syncedProductIds: number[] = [];
 
   const branchParams = Array.from(INCLUDED_BRANCH_IDS).map(id => `BranchIds=${id}`).join('&');
 
@@ -413,10 +414,22 @@ async function syncInventory(db: DB, branchIds: number[], fromDate: string | nul
     if (pRes.error)  throw dbErr(pRes.error);
     if (biRes.error) throw dbErr(biRes.error);
 
+    syncedProductIds.push(...products.map(p => p.id));
     totalSynced += products.length;
     currentItem += allProducts.length;
     if (logId) await updateSyncProgress(db, logId, totalSynced);
     if (currentItem >= page.total) break;
+  }
+
+  // On full syncs, mark any products not returned by the API as inactive
+  if (fromDate === null && syncedProductIds.length > 0) {
+    const { error: deactivateErr } = await db
+      .from('products')
+      .update({ is_active: false })
+      .eq('is_active', true)
+      .not('product_id', 'in', `(${syncedProductIds.join(',')})`);
+    if (deactivateErr) console.warn('[inventory-sync] deactivate stale products error:', deactivateErr.message);
+    else console.log(`[inventory-sync] reconciled inactive products (active set size: ${syncedProductIds.length})`);
   }
 
   // Clean up inactive / excluded-category products
