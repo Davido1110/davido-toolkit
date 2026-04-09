@@ -125,5 +125,17 @@ export const TOOLS: ToolMeta[] = [
     component: lazy(() => import('../tools/messenger-analytics')),
   },
 
+  {
+    id: 'doc-vault',
+    name: 'Kho Tài Liệu',
+    description: 'Quản lý vòng đời tài liệu: tạo, duyệt, phân quyền, lưu trữ, hủy.',
+    path: '/tools/doc-vault',
+    category: 'productivity',
+    icon: '🗂️',
+    tags: ['document', 'tài liệu', 'docx', 'xlsx', 'phê duyệt', 'lưu trữ'],
+    badge: 'New',
+    component: lazy(() => import('../tools/doc-vault')),
+  },
+
 // Add more tools here — each with its own lazy import
 ];
