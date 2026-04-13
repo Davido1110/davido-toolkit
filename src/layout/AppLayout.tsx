@@ -8,7 +8,7 @@ export function AppLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-950">
+    <div className="flex h-full bg-oat-cream">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -20,7 +20,7 @@ export function AppLayout() {
       {sidebarCollapsed && (
         <button
           onClick={() => setSidebarCollapsed(false)}
-          className="hidden lg:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-5 h-10 bg-white dark:bg-gray-900 border border-l-0 border-gray-200 dark:border-gray-700 rounded-r-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 shadow-sm transition-colors"
+          className="hidden lg:flex fixed left-0 top-1/2 -translate-y-1/2 z-40 items-center justify-center w-5 h-10 bg-oat-black border-2 border-l-0 border-oat-black rounded-r text-oat-white hover:text-oat-yellow transition-colors"
           title="Hiện thanh bên"
         >
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

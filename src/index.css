@@ -69,19 +69,61 @@
   font-display: swap;
 }
 
+/* Oatside design tokens */
+:root {
+  --c-black:  #0A0A0A;
+  --c-white:  #F5F2EC;
+  --c-cream:  #FAF7F2;
+  --c-yellow: #F5C926;
+  --c-red:    #D0302A;
+  --c-green:  #2D6A3F;
+  --c-blue:   #3B82C4;
+
+  --font-display: 'Anton', sans-serif;
+  --font-body:    'DM Sans', 'Sodo Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
 * { box-sizing: border-box; }
 
 html, body, #root {
   height: 100%;
   margin: 0;
-  font-family: 'Sodo Sans', ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-.dark ::-webkit-scrollbar-thumb { background: #475569; }
+::-webkit-scrollbar-thumb { background: #0A0A0A33; border-radius: 3px; }
+
+/* Oatside sticker badge */
+.sticker {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--c-yellow);
+  color: var(--c-black);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-2deg);
+  border: 2px solid var(--c-black);
+  white-space: nowrap;
+}
+.sticker--red { background: var(--c-red); color: var(--c-white); }
+.sticker--green { background: var(--c-green); color: var(--c-white); }
+
+/* Oatside entrance animation */
+@keyframes oat-enter {
+  from { opacity: 0; transform: translateY(20px) rotate(-0.5deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+.animate-oat-in {
+  animation: oat-enter 0.45s ease-out both;
+}
 
 /* Editable cell input */
 .editable-cell input {

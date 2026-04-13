@@ -31,7 +31,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
         t.description.toLowerCase().includes(q) ||
         t.tags?.some((tag) => tag.includes(q)),
     );
-  }, [search]);
+  }, [search, accessibleTools]);
 
   const grouped = useMemo(() => {
     const map: Record<string, typeof TOOLS> = {};
@@ -50,7 +50,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
       {/* Mobile overlay */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-20 lg:hidden"
           onClick={onClose}
         />
       )}
@@ -58,7 +58,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
       <aside
         className={`
           fixed top-0 left-0 h-full z-30 flex flex-col
-          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+          bg-oat-black border-r-2 border-oat-black
           transition-all duration-200
           ${open ? 'translate-x-0 w-64' : '-translate-x-full w-64'}
           lg:relative lg:z-auto lg:translate-x-0
@@ -66,23 +66,21 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
         `}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="w-9 h-9 bg-brand-700 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-            D
-          </div>
-          <div>
-            <div className="font-bold text-gray-900 dark:text-white leading-tight">Davido</div>
-            <div className="text-xs text-brand-600 dark:text-brand-400 font-semibold tracking-widest uppercase">
-              Toolkit
-            </div>
+        <div className="flex items-center px-4 py-4 border-b-2 border-white/10">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-2 bg-oat-yellow rounded-full border-2 border-oat-black font-anton text-oat-black uppercase text-sm tracking-wide select-none"
+            style={{ transform: 'rotate(-2deg)' }}
+          >
+            <span className="w-5 h-5 bg-oat-black rounded-full flex items-center justify-center text-oat-yellow text-xs">D</span>
+            <span>Davido Toolkit</span>
           </div>
         </div>
 
         {/* Search */}
-        <div className="px-3 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="px-3 py-3 border-b-2 border-white/10">
           <div className="relative">
             <svg
-              className="absolute left-2.5 top-2.5 w-4 h-4 text-gray-400"
+              className="absolute left-2.5 top-2.5 w-4 h-4 text-oat-white/40"
               fill="none" stroke="currentColor" viewBox="0 0 24 24"
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -93,7 +91,7 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
               placeholder="Search tools…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 border-none rounded-lg outline-none focus:ring-2 focus:ring-brand-500 dark:text-gray-200 placeholder:text-gray-400"
+              className="w-full pl-8 pr-3 py-2 text-sm bg-white/10 border-none rounded outline-none focus:ring-2 focus:ring-oat-yellow text-oat-white placeholder:text-oat-white/30"
             />
           </div>
         </div>
@@ -106,10 +104,10 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
             end
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium mb-1 transition-colors ${
+              `flex items-center gap-2.5 px-3 py-2 text-sm font-medium mb-1 transition-colors ${
                 isActive
-                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  ? 'bg-oat-yellow text-oat-black font-semibold'
+                  : 'text-oat-white/70 hover:bg-white/10 hover:text-oat-white'
               }`
             }
           >
@@ -127,17 +125,15 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
               <div key={cat.id} className="mb-1">
                 <button
                   onClick={() => toggleCategory(cat.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                    hasActive
-                      ? 'text-brand-700 dark:text-brand-300'
-                      : 'text-gray-700 dark:text-gray-300'
-                  } hover:bg-gray-100 dark:hover:bg-gray-800`}
+                  className={`w-full flex items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-widest transition-colors font-anton ${
+                    hasActive ? 'text-oat-yellow' : 'text-oat-white/50'
+                  } hover:bg-white/10 hover:text-oat-white`}
                 >
                   <span className="flex items-center gap-2">
-                    <span>{cat.icon}</span> {cat.label}
+                    <span className="text-sm">{cat.icon}</span> {cat.label}
                   </span>
                   <svg
-                    className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    className={`w-3 h-3 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                     fill="none" stroke="currentColor" viewBox="0 0 24 24"
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -145,24 +141,27 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
                 </button>
 
                 {isOpen && (
-                  <div className="ml-2 mt-0.5 border-l border-gray-200 dark:border-gray-700 pl-3 space-y-0.5">
+                  <div className="ml-2 mt-0.5 border-l-2 border-white/10 pl-3 space-y-0.5">
                     {catTools.map((tool) => (
                       <NavLink
                         key={tool.id}
                         to={tool.path}
                         onClick={onClose}
                         className={({ isActive }) =>
-                          `flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors ${
+                          `flex items-center gap-2 px-2 py-1.5 text-sm transition-colors ${
                             isActive
-                              ? 'bg-brand-50 text-brand-700 font-medium dark:bg-brand-900/40 dark:text-brand-300'
-                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                              ? 'bg-oat-yellow text-oat-black font-semibold'
+                              : 'text-oat-white/60 hover:bg-white/10 hover:text-oat-white'
                           }`
                         }
                       >
                         <span className="text-base">{tool.icon}</span>
                         <span className="truncate">{tool.name}</span>
                         {tool.badge && (
-                          <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 bg-brand-100 text-brand-700 rounded">
+                          <span
+                            className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-oat-yellow text-oat-black font-sans tracking-wide uppercase"
+                            style={{ transform: 'rotate(-2deg)', display: 'inline-block', border: '2px solid #0A0A0A' }}
+                          >
                             {tool.badge}
                           </span>
                         )}
@@ -176,16 +175,16 @@ export function Sidebar({ open, onClose, collapsed, onToggleCollapse }: Props) {
 
           {/* No results */}
           {search && Object.keys(grouped).length === 0 && (
-            <p className="text-sm text-gray-400 px-3 py-4 text-center">No tools found</p>
+            <p className="text-sm text-oat-white/30 px-3 py-4 text-center">No tools found</p>
           )}
         </nav>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 flex items-center justify-between">
-          <span>{accessibleTools.length} tool{accessibleTools.length !== 1 ? 's' : ''} available</span>
+        <div className="px-4 py-3 border-t-2 border-white/10 text-xs text-oat-white/30 flex items-center justify-between">
+          <span>{accessibleTools.length} tool{accessibleTools.length !== 1 ? 's' : ''}</span>
           <button
             onClick={onToggleCollapse}
-            className="hidden lg:flex items-center justify-center w-6 h-6 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="hidden lg:flex items-center justify-center w-6 h-6 hover:text-oat-yellow text-oat-white/30 transition-colors"
             title="Ẩn thanh bên"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
